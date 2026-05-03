@@ -61,7 +61,7 @@ extern I2C_HandleTypeDef hi2c2;
  *  Sensor LED control (L0~L7 — each drives 2 emitter LEDs)
  *  CubeMX labels: L0_Pin ~ L7_Pin on various ports
  * ═══════════════════════════════════════════════════════════════════════════ */
-/* NOTE: L0~L7 naming in CubeMX main.h differs from sensor_system_design.md
+/* NOTE: L0~L7 naming in CubeMX main.h differs from docs/sensor_system_design.md
  *       CubeMX labels are reversed (L7=PC14, L0=PC2).
  *       The step table below follows the design doc mapping. */
 

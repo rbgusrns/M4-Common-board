@@ -5,7 +5,7 @@
   *
   * @note    Ported from sensor.h/_Viper_ (TMS320F2809)
   *          ADC scanning redesigned for STM32G474 multi-ADC + DMA architecture
-  *          Refer to sensor_system_design.md for hardware details
+ *          Refer to docs/sensor_system_design.md for hardware details
   ******************************************************************************
   */
 
