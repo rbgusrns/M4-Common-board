@@ -1,0 +1,23 @@
+---- iqTargetA Matches (25 in 8 files) ----
+fastrun.asm (main):	.dwattr DW$251, DW_AT_name("iqTargetA"), DW_AT_symbol_name("_iqTargetA")
+main.asm (main):	.dwattr DW$181, DW_AT_name("iqTargetA"), DW_AT_symbol_name("_iqTargetA")
+Motor.asm (main):;*** 374	-----------------------    RMotor.iqTargetA = LMotor.iqTargetA = acc<<17;
+Motor.asm (main):;*** 398	-----------------------    RMotor.iqTargetA = LMotor.iqTargetA = acc<<17;
+Motor.asm (main):;*** 246	-----------------------    (*pM).iqTargetA = (long)((long double)g_u32_ACC_targetval*1.31072e5L);
+Motor.asm (main):;*** 293	-----------------------    (*pM).iqAmpyS = v$2 = __IQmpy(215975L, (*pM).iqTargetA, 17);
+Motor.asm (main):;*** 295	-----------------------    (*pM).iq24TargetA_1 = v$3 = __IQmpy((*pM).iqTargetA, 1310L, 17)<<7;
+Motor.asm (main):;*** 271	-----------------------    (*pM).iqAmpyS = v$2 = __IQmpy(215975L, (*pM).iqTargetA, 17);
+Motor.asm (main):;*** 274	-----------------------    (*pM).iq24TargetA_1 = v$3 = __IQmpy((*pM).iqTargetA, 1310L, 17)<<7;
+Motor.asm (main):	.dwattr DW$185, DW_AT_name("iqTargetA"), DW_AT_symbol_name("_iqTargetA")
+Motor.c (main):	pM->iqTargetA = _IQ17( g_u32_ACC_targetval );	// 목표 가속도
+Motor.c (main):		pM->iqAmpyS = _IQmpy(STEP_2D, pM->iqTargetA); 
+Motor.c (main):		pM->iq24TargetA_1 = ( _IQmpy(pM->iqTargetA, _IQ(0.01)) << 7);
+Motor.c (main):		pM->iqAmpyS = _IQmpy(STEP_2D, pM->iqTargetA);
+Motor.c (main):		pM->iq24TargetA_1 = ( _IQmpy(pM->iqTargetA, _IQ(0.01)) << 7);
+Motor.c (main):   RMotor.iqTargetA = LMotor.iqTargetA = acc << 17;
+Motor.c (main):    RMotor.iqTargetA = LMotor.iqTargetA = acc << 17;
+search.asm (main):	.dwattr DW$148, DW_AT_name("iqTargetA"), DW_AT_symbol_name("_iqTargetA")
+sensor.asm (main):;*** 451	-----------------------    LMotor.iqTargetA = RMotor.iqTargetA = 1048576000L;
+sensor.asm (main):	.dwattr DW$289, DW_AT_name("iqTargetA"), DW_AT_symbol_name("_iqTargetA")
+sensor.c (main):		LMotor.iqTargetA = RMotor.iqTargetA = _IQ(8000.0);
+Struct.h (include):	_iq17	iqTargetA;		///< 목표 가속도

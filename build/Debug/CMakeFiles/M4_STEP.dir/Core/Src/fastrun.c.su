@@ -1,0 +1,14 @@
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:16:6:second_race	8	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:23:6:fast_race	16	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:71:13:turn_division_func	16	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:80:6:second_info	24	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:103:13:turn_division_compute	16	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:113:13:large_turn_compute	24	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:148:13:straight_compute	24	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:205:13:default_turn_compute	16	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:269:6:max_vel_compute	40	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:283:6:decel_dist_compute	32	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:294:6:turn_info_func	16	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:303:6:turn_info_compute	32	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:400:6:speed_up_compute	24	static
+C:/STproject/G474/M4_STEP/Core/Src/fastrun.c:416:13:speed_up_func	4	static

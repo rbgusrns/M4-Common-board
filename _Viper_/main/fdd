@@ -1,0 +1,107 @@
+	
+C:\project\translate\main>./title _666_cpu(TMS2808)_init_user_compile 
+'.'은(는) 내부 또는 외부 명령, 실행할 수 있는 프로그램, 또는
+배치 파일이 아닙니다.
+
+C:\project\translate\main>color 00 
+
+C:\project\translate\main>set PATH_BAT= C:\project\translate\Compiler 
+
+C:\project\translate\main>set TARGET_BAT=translate 
+
+C:\project\translate\main>cls
+
+C:\project\translate\main>C:\project\translate\Compiler\bin\make clean 
+del *.out
+del *.map
+del *.obj
+
+C:\project\translate\main>C:\project\translate\Compiler\bin\make all 
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_Adc.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_EPwm.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_EQep.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_CpuTimers.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_DefaultIsr.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_GlobalVariableDefs.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_Gpio.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_MemCopy.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_PieCtrl.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_PieVect.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_Sci.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_Spi.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include DSP280x_SysCtrl.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include Main.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include Menu.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include VFD.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include Motor.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include Rom.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include Sensor.c
+<Optimizing>
+<Generating>
+<Assembling>
+C:\project\translate\Compiler\bin\cl2000.exe -g -s -k -pm -op0 -o3 -d"LARGE_MODEL" -mf -ml -v28 -iC:\project\translate\include Search.c
+"search.c", line 305: error: expected a ";"
+"search.c", line 306: warning: missing return statement at end of non-void function "race_stop_check"
+1 error detected in the compilation of "search.c".
+
+>> Compilation failure
+C:\project\translate\Compiler\bin\make: *** [Search.obj] Error 1
+
+C:\project\translate\main>C:\project\translate\Compiler\bin\hex2000 translate.out -o translate.hex -map translate.map -i -datawidth 16 -memwidth 16 -romwidth 16  
+>> FATAL ERROR: cannot open input file 'translate.out': No such file or
+                directory (aborting)
+Compile Time 2023-01-14 16:35:53.25
