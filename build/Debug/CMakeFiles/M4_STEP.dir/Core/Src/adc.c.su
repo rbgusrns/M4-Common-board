@@ -1,0 +1,7 @@
+C:/STproject/M4_STEP/Core/Src/adc.c:39:6:MX_ADC1_Init	56	static
+C:/STproject/M4_STEP/Core/Src/adc.c:102:6:MX_ADC2_Init	40	static
+C:/STproject/M4_STEP/Core/Src/adc.c:156:6:MX_ADC3_Init	56	static
+C:/STproject/M4_STEP/Core/Src/adc.c:219:6:MX_ADC4_Init	40	static
+C:/STproject/M4_STEP/Core/Src/adc.c:273:6:MX_ADC5_Init	40	static
+C:/STproject/M4_STEP/Core/Src/adc.c:330:6:HAL_ADC_MspInit	176	static
+C:/STproject/M4_STEP/Core/Src/adc.c:626:6:HAL_ADC_MspDeInit	16	static

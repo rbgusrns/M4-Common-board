@@ -62,7 +62,7 @@ rule C_COMPILER__STM32_Drivers_unscanned_Debug
 # Rule for re-running cmake.
 
 rule RERUN_CMAKE
-  command = C:\ST\STM32CubeCLT_1.21.0\CMake\bin\cmake.exe --regenerate-during-build -SC:\STproject\G474\M4_STEP -BC:\STproject\G474\M4_STEP\build\Debug
+  command = C:\ST\STM32CubeCLT_1.21.0\CMake\bin\cmake.exe --regenerate-during-build -SC:\STproject\M4_STEP -BC:\STproject\M4_STEP\build\Debug
   description = Re-running CMake...
   generator = 1
 

@@ -1,4 +1,4 @@
-# Install script for directory: C:/STproject/G474/M4_STEP/cmake/stm32cubemx
+# Install script for directory: C:/STproject/M4_STEP/cmake/stm32cubemx
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

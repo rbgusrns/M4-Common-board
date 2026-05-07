@@ -31,8 +31,7 @@
       ],
       "dependsOrder": "sequence",
       "group": {
-        "kind": "build",
-        "isDefault": true
+        "kind": "build"
       },
       "problemMatcher": []
     },
@@ -60,11 +59,14 @@
       "problemMatcher": []
     },
     {
-      "label": "build + flash",
+      "label": "cmake: build + flash",
       "dependsOn": [
         "flash: stlink"
       ],
       "dependsOrder": "sequence",
+            "group": {
+        "kind": "build"
+      },
       "problemMatcher": []
     }
   ]
