@@ -13,14 +13,14 @@ volatile uint32_t g_adc_buf_lo = 0;
 volatile uint8_t g_scan_step = 0;
 
 const scan_step_t scan_table[SEN_NUM] = {
-    { { L7_GPIO_Port, L7_Pin }, &hadc3, &hadc1, ADC_CHANNEL_2,  ADC_CHANNEL_1,  7, 15 },
-    { { L6_GPIO_Port, L6_Pin }, &hadc3, &hadc1, ADC_CHANNEL_4,  ADC_CHANNEL_2,  6, 14 },
-    { { L5_GPIO_Port, L5_Pin }, &hadc4, &hadc1, ADC_CHANNEL_5,  ADC_CHANNEL_3,  5, 13 },
-    { { L4_GPIO_Port, L4_Pin }, &hadc4, &hadc1, ADC_CHANNEL_12, ADC_CHANNEL_4,  4, 12 },
-    { { L3_GPIO_Port, L3_Pin }, &hadc4, &hadc2, ADC_CHANNEL_13, ADC_CHANNEL_3,  3, 11 },
-    { { L2_GPIO_Port, L2_Pin }, &hadc5, &hadc2, ADC_CHANNEL_7,  ADC_CHANNEL_4,  2, 10 },
-    { { L1_GPIO_Port, L1_Pin }, &hadc5, &hadc2, ADC_CHANNEL_8,  ADC_CHANNEL_5,  1,  9 },
-    { { L0_GPIO_Port, L0_Pin }, &hadc5, &hadc3, ADC_CHANNEL_9,  ADC_CHANNEL_1,  0,  8 },
+    { { L0_GPIO_Port, L0_Pin }, &hadc3, &hadc1, ADC_CHANNEL_2,  ADC_CHANNEL_1,  7, 15 },
+    { { L1_GPIO_Port, L1_Pin }, &hadc3, &hadc1, ADC_CHANNEL_4,  ADC_CHANNEL_2,  6, 14 },
+    { { L2_GPIO_Port, L2_Pin }, &hadc4, &hadc1, ADC_CHANNEL_5,  ADC_CHANNEL_3,  5, 13 },
+    { { L3_GPIO_Port, L3_Pin }, &hadc4, &hadc1, ADC_CHANNEL_12, ADC_CHANNEL_4,  4, 12 },
+    { { L4_GPIO_Port, L4_Pin }, &hadc4, &hadc2, ADC_CHANNEL_13, ADC_CHANNEL_3,  3, 11 },
+    { { L5_GPIO_Port, L5_Pin }, &hadc5, &hadc2, ADC_CHANNEL_7,  ADC_CHANNEL_4,  2, 10 },
+    { { L6_GPIO_Port, L6_Pin }, &hadc5, &hadc2, ADC_CHANNEL_8,  ADC_CHANNEL_5,  1,  9 },
+    { { L7_GPIO_Port, L7_Pin }, &hadc5, &hadc3, ADC_CHANNEL_9,  ADC_CHANNEL_1,  0,  8 },
 };
 
 static void sensor_emitters_off(void);
