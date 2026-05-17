@@ -33,7 +33,7 @@ char menu_sel[ROW][COLUMN][9] = {
 
 void _NULL_FUNC(void)
 {
-    OLED_Printf("NOTTING_");
+    OLED_Printf(0U, 0U, "NOTTING_");
     HAL_Delay(500);
 }
 
@@ -60,7 +60,7 @@ void menu(void)
         }
     }
     
-    OLED_Printf("%s", menu_sel[row][column]);
+    OLED_Printf(0U, 0U, "%s", menu_sel[row][column]);
 
     if(Left_SW || Left_W) { HAL_Delay(DELAY); column--; }
     if(column < 0) column = 0;
@@ -69,7 +69,7 @@ void menu(void)
 void menu_start(void)
 {
     OLED_Init(); // Initialize I2C OLED display
-    OLED_Printf("%s", menu_sel[row][column]);
+    OLED_Printf(0U, 0U, "%s", menu_sel[row][column]);
     sensor_scan_start();
 
     while(1) 

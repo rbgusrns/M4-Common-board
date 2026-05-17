@@ -1,4 +1,4 @@
-﻿#include "motor.h"
+#include "motor.h"
 #include "oled.h"
 #include "rom.h"
 #include <string.h>
@@ -8,7 +8,7 @@ void F_ENDACCEL()
 {
     while(SW_D)
     {
-        OLED_Printf("EDA:%lu", g_u32_END_ACC_targetval);
+        OLED_Printf(0U, 0U, "EDA:%lu", g_u32_END_ACC_targetval);
         if (!SW_R)
         {
             HAL_Delay(135);
@@ -35,7 +35,7 @@ void F_ACCELERATION()
     a = 0;
     while(SW_D)
     {
-        OLED_Printf("ACC=%lu", g_u32_ACC_targetval);
+        OLED_Printf(0U, 0U, "ACC=%lu", g_u32_ACC_targetval);
         if (!SW_R) 
         {
             HAL_Delay(125);
@@ -52,7 +52,7 @@ void F_ACCELERATION()
 
     while(SW_D)
     {
-        OLED_Printf("ACC=%lu", g_int32long_ACC);
+        OLED_Printf(0U, 0U, "ACC=%lu", g_int32long_ACC);
         if (!SW_R) 
         {
             HAL_Delay(125);
@@ -75,7 +75,7 @@ void F_HANDLE_ACC()
 {
     while(SW_D)
     {
-        OLED_Printf("HDA=%4u", g_i16_handle_acc);
+        OLED_Printf(0U, 0U, "HDA=%4u", g_i16_handle_acc);
         if (SW_R == 0) 
         {
             HAL_Delay(125);
@@ -98,7 +98,7 @@ void F_HANDLE_DEC()
 {
     while(SW_D)
     {
-        OLED_Printf("HDD=%4u", g_i16_handle_dec);
+        OLED_Printf(0U, 0U, "HDD=%4u", g_i16_handle_dec);
         if (SW_R == 0) 
         {
             HAL_Delay(125);
@@ -122,7 +122,7 @@ void F_TURNDIST()
 {
     while(SW_D)
     {
-        OLED_Printf("DIST=%u", g_u16turn_dist);
+        OLED_Printf(0U, 0U, "DIST=%u", g_u16turn_dist);
         if (!SW_R) 
         {
             HAL_Delay(125);
@@ -143,7 +143,7 @@ void F_VELOCITY()
     a = 0;
     while(SW_D)
     {
-        OLED_Printf("VEL=%lu", g_u32_VEL_targetval);
+        OLED_Printf(0U, 0U, "VEL=%lu", g_u32_VEL_targetval);
         if (!SW_R) 
         {
             HAL_Delay(125);

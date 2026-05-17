@@ -1,4 +1,4 @@
-﻿#include "fastrun.h"
+#include "fastrun.h"
 #include "motor.h"
 #include "sensor.h"
 #include "oled.h"
@@ -16,7 +16,7 @@ static void speed_up_func(void);
 void second_race()
 {
     // StartCpuTimer0();
-    OLED_Printf("_ _GO_ _");
+    OLED_Printf(0U, 0U, "_ _GO_ _");
     fast_race(search_info);
 }
 
@@ -29,7 +29,7 @@ void fast_race(race_info *pinfo)
     turn_division_func();
 
     Race_Init();
-    OLED_Printf("        ");
+    OLED_Printf(0U, 0U, "        ");
     
     g_Flag.second_race = ON;
     

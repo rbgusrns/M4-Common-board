@@ -1,4 +1,4 @@
-﻿#include "search.h"
+#include "search.h"
 #include "motor.h"
 #include "sensor.h"
 #include "oled.h"
@@ -65,12 +65,12 @@ void F_1st_run()
     c=0;
     d=0;
     // StartCpuTimer0();
-    OLED_Printf("_ _GO_ _");
+    OLED_Printf(0U, 0U, "_ _GO_ _");
     HAL_Delay(100);
         
     search_race();
          
-    OLED_Printf("__END___");
+    OLED_Printf(0U, 0U, "__END___");
 
     a=1;
     b=2; 
@@ -98,16 +98,16 @@ int race_stop_check( void )
         {
             while(SW_U)
             {
-                OLED_Printf("MARK:%u", U16_turnmark_cnt);
+                OLED_Printf(0U, 0U, "MARK:%u", U16_turnmark_cnt);
             }
             line_info(NULL);
             write_mark_cnt_rom();
             write_line_info_rom();
 
-            OLED_Printf("__SAVE__");
+            OLED_Printf(0U, 0U, "__SAVE__");
             HAL_Delay(1000);
             // float printing is not natively supported without changes in some stdlib setups, but we'll leave the format.
-            OLED_Printf("T:%3.2f", g_fp32time);
+            OLED_Printf(0U, 0U, "T:%3.2f", g_fp32time);
         }
     }
     return 0;
@@ -136,7 +136,7 @@ void search_race()
     a=0;
     motor_vari_init();
     HAL_Delay(500);
-    OLED_Printf("        ");
+    OLED_Printf(0U, 0U, "        ");
    
     g_Flag.first_race = ON;
 

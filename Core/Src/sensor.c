@@ -15,7 +15,6 @@ static volatile uint16_t g_adc2_dma_buf[SEN_NUM];
 static volatile uint16_t g_adc3_dma_buf[SEN_NUM];
 static volatile uint16_t g_adc4_dma_buf[SEN_NUM];
 static volatile uint16_t g_adc5_dma_buf[SEN_NUM];
-static volatile uint8_t g_frame_ready = 0;
 
 const scan_step_t scan_table[SEN_NUM] = {
     { { L0_GPIO_Port, L0_Pin }, &hadc3, &hadc1, ADC_CHANNEL_2,  ADC_CHANNEL_1,  7, 15 },
@@ -143,26 +142,12 @@ static void sensor_start_adc_dma(ADC_HandleTypeDef *hadc, volatile uint16_t *p_b
 
 void sensor_scan_poll(void)
 {
-    __disable_irq();
-
-    if (g_frame_ready == 0u) {
-        __enable_irq();
-        return;
-    }
-
-    g_frame_ready = 0u;
-    __enable_irq();
-
-    sensor_copy_frame();
-    sensor_check_127();
-    g_int32_isr_cnt++;
 }
 
 void sensor_scan_start(void)
 {
     g_scan_step = 0;
     g_dma_done_flags = 0;
-    g_frame_ready = 0;
 
     memset((void *)g_adc1_dma_buf, 0, sizeof(g_adc1_dma_buf));
     memset((void *)g_adc2_dma_buf, 0, sizeof(g_adc2_dma_buf));
@@ -180,6 +165,10 @@ void sensor_scan_start(void)
     __HAL_TIM_SET_COUNTER(&htim2, 0);
 
     if (HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_2) != HAL_OK) {
+        Error_Handler();
+    }
+    
+    if (HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3) != HAL_OK) {
         Error_Handler();
     }
 
@@ -209,8 +198,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance != TIM2 || htim->Channel != HAL_TIM_ACTIVE_CHANNEL_2) {
+    if (htim->Instance != TIM2) {
         return;
+    }
+
+    if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3) {
+        sensor_led_off(&scan_table[g_scan_step].led);
     }
 }
 
@@ -226,7 +219,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
     if (g_dma_done_flags == 0x1Fu) {
         g_dma_done_flags = 0u;
-        g_frame_ready = 1u;
+        sensor_copy_frame();
+        sensor_check_127();
+        g_int32_isr_cnt++;
     }
 }
 
@@ -614,15 +609,15 @@ void start_end_check(void)
         if(g_Flag.first_race)
         {
             move_to_end( 200.0f, 0.0f, g_u32_END_ACC_targetval);
-            OLED_Printf(" END_ON ");
-            OLED_Printf("T:%3.2f", g_fp32time);
+            OLED_Printf(0U, 0U, " END_ON ");
+            OLED_Printf(0U, 0U, "T:%3.2f", g_fp32time);
         }
         else if(g_Flag.second_race)
         {
-            OLED_Printf("2nd  END");
+            OLED_Printf(0U, 0U, "2nd  END");
             move_to_end( 200.0f, 0.0f, g_u32_END_ACC_targetval);
             LMotor.iq15GoneDist = RMotor.iq15GoneDist = 0.0f;
-            OLED_Printf("T:%3.2f", g_fp32time);
+            OLED_Printf(0U, 0U, "T:%3.2f", g_fp32time);
         }
 
         LMotor.iq17distance_sum = RMotor.iq17distance_sum = 0.0f;
@@ -652,7 +647,7 @@ void line_info(turnmark_t *p_mark)
 void F_4095()
 {
     a = 0;
-    OLED_Printf("        ");
+    OLED_Printf(0U, 0U, "        ");
     do
     {
         if (!SW_R)    
@@ -668,8 +663,9 @@ void F_4095()
 
         if (a < 0) a = 15;
         else if (a > 15) a = 0;
-
-        OLED_Printf("S%d:%.0f", a, g_sen[a].iq17_4095_value); 
+        
+        OLED_Printf(1U, 0U, "I:%ld", g_int32_isr_cnt);
+        OLED_Printf(0U, 0U, "S%d:%4d", a, (int)(g_sen[a].iq17_4095_value)); 
     } while(SW_D); 
 
     a = 2;
@@ -679,7 +675,7 @@ void F_Max_min()
 {
     int16_t sen_value_setting = 0;
     
-    OLED_Printf("LOADING_");
+    OLED_Printf(0U, 0U, "LOADING_");
     HAL_Delay(500);
 
     for( sen_value_setting = 0 ; sen_value_setting < ADC_NUM ; sen_value_setting++ )
@@ -690,7 +686,7 @@ void F_Max_min()
 
     while(SW_R)
     {
-        OLED_Printf("Set_MAX_");
+        OLED_Printf(0U, 0U, "Set_MAX_");
         for( sen_value_setting = 0 ; sen_value_setting < ADC_NUM ; sen_value_setting++ )
         {
             if (g_sen[sen_value_setting].iq17_4095_max_value < g_sen[sen_value_setting].iq17_4095_value)
@@ -700,7 +696,7 @@ void F_Max_min()
     
     while(SW_D)
     {
-        OLED_Printf("Set_MIN_");
+        OLED_Printf(0U, 0U, "Set_MIN_");
         for( sen_value_setting = 0 ; sen_value_setting < ADC_NUM ; sen_value_setting++ )
         {
             if (g_sen[sen_value_setting].iq17_4095_min_value > g_sen[sen_value_setting].iq17_4095_value)
@@ -714,7 +710,7 @@ void F_Max_min()
 void F_127()
 {    
     a = 0;
-    OLED_Printf("        ");
+    OLED_Printf(0U, 0U, "        ");
     
     do
     {
@@ -732,7 +728,7 @@ void F_127()
         if (a < 0) a = 15;
         else if (a > 15) a = 0;
 
-        OLED_Printf("S%d:%.0f", a, g_sen[a].iq17_127_value); 
+        OLED_Printf(0U, 0U, "S%d:%d", a, (int)(g_sen[a].iq17_127_value)); 
     } while(SW_D); 
 
     a = 3;
@@ -740,7 +736,7 @@ void F_127()
 
 void F_POSCHECK()
 {
-    OLED_Printf("POSCHECK");
+    OLED_Printf(0U, 0U, "POSCHECK");
     HAL_Delay(500);
     g_u16pos_cnt=6;
 
@@ -774,7 +770,7 @@ void F_POSCHECK()
 
             position_enable(&g_pos);
 
-            OLED_Printf("P:%6.0f", g_pos.iq10temp_position);
+            OLED_Printf(0U, 0U, "P:%6.0f", g_pos.iq10temp_position);
         }
     }
     a=4;
@@ -785,10 +781,10 @@ void F_TURNMARK()
     read_mark_cnt_rom();
     read_line_info_rom();
     cnt=0;
-    OLED_Printf("MARK:%ld",g_int32total_cnt);
+    OLED_Printf(0U, 0U, "MARK:%ld",g_int32total_cnt);
 
     HAL_Delay(1000);
-    OLED_Printf("        ");
+    OLED_Printf(0U, 0U, "        ");
     
     while(SW_D)    
     {
@@ -798,7 +794,7 @@ void F_TURNMARK()
         else if(!SW_L) cnt--;
         else if(!SW_U) cnt+=10;
 
-        OLED_Printf("T%d:%3lu", cnt, search_info[cnt].int32turn_way);
+        OLED_Printf(0U, 0U, "T%d:%3lu", cnt, search_info[cnt].int32turn_way);
     }
 }
 
@@ -806,7 +802,7 @@ void sensor_check_127(void)
 {
     // Sensor normalize (ADC raw to 0..127)
     for(int i = 0; i < 16; i++) {
-        // g_sen[i].iq17_4095_value is updated in the DMA callbacks.
+        // g_sen[i].iq17_4095_value is updated after all ADC DMA buffers complete.
         float denom = g_sen[i].iq17_4095_max_value - g_sen[i].iq17_4095_min_value;
         if(denom <= 0.0f) denom = 1.0f; // Division by zero protection
 
@@ -842,7 +838,7 @@ int line_out_func(void)
 
         motor_stop_all();
 
-        OLED_Printf("Line Out");
+        OLED_Printf(0U, 0U, "Line Out");
         
         while(1)
         {

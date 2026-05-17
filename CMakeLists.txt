@@ -48,9 +48,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    Core/Src/dfr0647.c
     Core/Src/fastrun.c
-    Core/Src/font5x7.c
     Core/Src/menu.c
     Core/Src/motor.c
     Core/Src/oled.c
