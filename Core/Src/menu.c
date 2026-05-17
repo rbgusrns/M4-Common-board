@@ -68,12 +68,15 @@ void menu(void)
 
 void menu_start(void)
 {
-    HAL_Delay(100);
     OLED_Init(); // Initialize I2C OLED display
+    OLED_Printf("%s", menu_sel[row][column]);
+    sensor_scan_start();
 
     while(1) 
     {     
+         sensor_scan_poll();
          menu();
+         sensor_scan_poll();
          HAL_Delay(1); // Small loop delay
     }
 }

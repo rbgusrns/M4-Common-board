@@ -106,7 +106,6 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   sen_vari_init();
-  sensor_scan_start();
   menu_start();
   /* USER CODE END 2 */
 

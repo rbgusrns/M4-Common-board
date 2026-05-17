@@ -7,10 +7,15 @@
 #include <math.h>
 #include <string.h>
 
-volatile uint8_t g_dma_done_flags = 0;
-volatile uint32_t g_adc_buf_hi = 0;
-volatile uint32_t g_adc_buf_lo = 0;
 volatile uint8_t g_scan_step = 0;
+volatile uint8_t g_dma_done_flags = 0;
+
+static volatile uint16_t g_adc1_dma_buf[SEN_NUM];
+static volatile uint16_t g_adc2_dma_buf[SEN_NUM];
+static volatile uint16_t g_adc3_dma_buf[SEN_NUM];
+static volatile uint16_t g_adc4_dma_buf[SEN_NUM];
+static volatile uint16_t g_adc5_dma_buf[SEN_NUM];
+static volatile uint8_t g_frame_ready = 0;
 
 const scan_step_t scan_table[SEN_NUM] = {
     { { L0_GPIO_Port, L0_Pin }, &hadc3, &hadc1, ADC_CHANNEL_2,  ADC_CHANNEL_1,  7, 15 },
@@ -24,144 +29,205 @@ const scan_step_t scan_table[SEN_NUM] = {
 };
 
 static void sensor_emitters_off(void);
-static void sensor_begin_step(uint8_t step);
-static void sensor_finalize_frame(void);
-static HAL_StatusTypeDef sensor_configure_channel(ADC_HandleTypeDef *hadc, uint32_t channel);
-static void sensor_store_dma_result(ADC_HandleTypeDef *hadc);
+static void sensor_set_active_step(uint8_t step);
+static void sensor_led_on(const led_pin_t *p_led);
+static void sensor_led_off(const led_pin_t *p_led);
+static volatile uint16_t *sensor_dma_buffer_for_adc(ADC_HandleTypeDef *hadc);
+static uint8_t sensor_dma_mask_for_adc(ADC_HandleTypeDef *hadc);
+static void sensor_copy_frame(void);
+static void sensor_start_adc_dma(ADC_HandleTypeDef *hadc, volatile uint16_t *p_buf);
 
 const uint16_t state_table[18] = {
     0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff, 
     0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff, 0x0000, 0x0000
 };
 
+static void sensor_led_on(const led_pin_t *p_led)
+{
+    p_led->port->BSRR = p_led->pin;
+}
+
+static void sensor_led_off(const led_pin_t *p_led)
+{
+    p_led->port->BSRR = (uint32_t)p_led->pin << 16u;
+}
+
 static void sensor_emitters_off(void)
 {
-    HAL_GPIO_WritePin(L7_GPIO_Port, L7_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(L6_GPIO_Port, L6_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(L5_GPIO_Port, L5_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(L4_GPIO_Port, L4_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(L3_GPIO_Port, L3_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(L2_GPIO_Port, L2_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(L1_GPIO_Port, L1_Pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(L0_GPIO_Port, L0_Pin, GPIO_PIN_RESET);
+    GPIOC->BSRR = ((uint32_t)L0_Pin | (uint32_t)L1_Pin | (uint32_t)L2_Pin | (uint32_t)L6_Pin | (uint32_t)L7_Pin) << 16u;
+    GPIOF->BSRR = ((uint32_t)L3_Pin | (uint32_t)L4_Pin | (uint32_t)L5_Pin) << 16u;
 }
 
-static HAL_StatusTypeDef sensor_configure_channel(ADC_HandleTypeDef *hadc, uint32_t channel)
-{
-    ADC_ChannelConfTypeDef sConfig = {0};
-
-    sConfig.Channel = channel;
-    sConfig.Rank = ADC_REGULAR_RANK_1;
-    sConfig.SamplingTime = ADC_SAMPLETIME_2CYCLES_5;
-    sConfig.SingleDiff = ADC_SINGLE_ENDED;
-    sConfig.OffsetNumber = ADC_OFFSET_NONE;
-    sConfig.Offset = 0;
-
-    return HAL_ADC_ConfigChannel(hadc, &sConfig);
-}
-
-static void sensor_begin_step(uint8_t step)
+static void sensor_set_active_step(uint8_t step)
 {
     const scan_step_t *p_step = &scan_table[step];
 
-    g_dma_done_flags = 0;
-    g_adc_buf_hi = 0;
-    g_adc_buf_lo = 0;
-
-    (void)HAL_ADC_Stop_DMA(p_step->hadc_hi);
-    (void)HAL_ADC_Stop_DMA(p_step->hadc_lo);
-
-    if (sensor_configure_channel(p_step->hadc_hi, p_step->adc_hi_channel) != HAL_OK) {
-        Error_Handler();
-    }
-
-    if (sensor_configure_channel(p_step->hadc_lo, p_step->adc_lo_channel) != HAL_OK) {
-        Error_Handler();
-    }
-
     sensor_emitters_off();
-    HAL_GPIO_WritePin(p_step->led.port, p_step->led.pin, GPIO_PIN_SET);
+    sensor_led_on(&p_step->led);
 }
 
-static void sensor_finalize_frame(void)
+static volatile uint16_t *sensor_dma_buffer_for_adc(ADC_HandleTypeDef *hadc)
 {
+    if (hadc == &hadc1) {
+        return g_adc1_dma_buf;
+    }
+
+    if (hadc == &hadc2) {
+        return g_adc2_dma_buf;
+    }
+
+    if (hadc == &hadc3) {
+        return g_adc3_dma_buf;
+    }
+
+    if (hadc == &hadc4) {
+        return g_adc4_dma_buf;
+    }
+
+    if (hadc == &hadc5) {
+        return g_adc5_dma_buf;
+    }
+
+    return NULL;
+}
+
+static uint8_t sensor_dma_mask_for_adc(ADC_HandleTypeDef *hadc)
+{
+    if (hadc == &hadc1) {
+        return 0x01u;
+    }
+
+    if (hadc == &hadc2) {
+        return 0x02u;
+    }
+
+    if (hadc == &hadc3) {
+        return 0x04u;
+    }
+
+    if (hadc == &hadc4) {
+        return 0x08u;
+    }
+
+    if (hadc == &hadc5) {
+        return 0x10u;
+    }
+
+    return 0u;
+}
+
+static void sensor_copy_frame(void)
+{
+    uint8_t step;
+
+    for (step = 0; step < SEN_NUM; step++) {
+        const scan_step_t *p_step = &scan_table[step];
+        volatile uint16_t *p_hi_buf = sensor_dma_buffer_for_adc(p_step->hadc_hi);
+        volatile uint16_t *p_lo_buf = sensor_dma_buffer_for_adc(p_step->hadc_lo);
+
+        if ((p_hi_buf == NULL) || (p_lo_buf == NULL)) {
+            Error_Handler();
+        }
+
+        g_sen[p_step->sen_hi_idx].iq17_4095_value = (float)p_hi_buf[step];
+        g_sen[p_step->sen_lo_idx].iq17_4095_value = (float)p_lo_buf[step];
+    }
+}
+
+static void sensor_start_adc_dma(ADC_HandleTypeDef *hadc, volatile uint16_t *p_buf)
+{
+    if (HAL_ADC_Start_DMA(hadc, (uint32_t *)p_buf, SEN_NUM) != HAL_OK) {
+        Error_Handler();
+    }
+}
+
+void sensor_scan_poll(void)
+{
+    __disable_irq();
+
+    if (g_frame_ready == 0u) {
+        __enable_irq();
+        return;
+    }
+
+    g_frame_ready = 0u;
+    __enable_irq();
+
+    sensor_copy_frame();
     sensor_check_127();
     g_int32_isr_cnt++;
-}
-
-static void sensor_store_dma_result(ADC_HandleTypeDef *hadc)
-{
-    const scan_step_t *p_step = &scan_table[g_scan_step];
-
-    if (hadc == p_step->hadc_hi) {
-        g_sen[p_step->sen_hi_idx].iq17_4095_value = (float)g_adc_buf_hi;
-        g_dma_done_flags |= 0x01u;
-    }
-
-    if (hadc == p_step->hadc_lo) {
-        g_sen[p_step->sen_lo_idx].iq17_4095_value = (float)g_adc_buf_lo;
-        g_dma_done_flags |= 0x02u;
-    }
-
-    if (g_dma_done_flags == 0x03u) {
-        sensor_emitters_off();
-        g_scan_step++;
-
-        if (g_scan_step >= SEN_NUM) {
-            g_scan_step = 0;
-            sensor_finalize_frame();
-        }
-    }
 }
 
 void sensor_scan_start(void)
 {
     g_scan_step = 0;
     g_dma_done_flags = 0;
-    g_adc_buf_hi = 0;
-    g_adc_buf_lo = 0;
-    sensor_emitters_off();
+    g_frame_ready = 0;
 
-    if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
+    memset((void *)g_adc1_dma_buf, 0, sizeof(g_adc1_dma_buf));
+    memset((void *)g_adc2_dma_buf, 0, sizeof(g_adc2_dma_buf));
+    memset((void *)g_adc3_dma_buf, 0, sizeof(g_adc3_dma_buf));
+    memset((void *)g_adc4_dma_buf, 0, sizeof(g_adc4_dma_buf));
+    memset((void *)g_adc5_dma_buf, 0, sizeof(g_adc5_dma_buf));
+
+    sensor_start_adc_dma(&hadc1, g_adc1_dma_buf);
+    sensor_start_adc_dma(&hadc2, g_adc2_dma_buf);
+    sensor_start_adc_dma(&hadc3, g_adc3_dma_buf);
+    sensor_start_adc_dma(&hadc4, g_adc4_dma_buf);
+    sensor_start_adc_dma(&hadc5, g_adc5_dma_buf);
+
+    sensor_set_active_step(0);
+    __HAL_TIM_SET_COUNTER(&htim2, 0);
+
+    if (HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_2) != HAL_OK) {
         Error_Handler();
     }
 
-    if (HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_2) != HAL_OK) {
+    if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
         Error_Handler();
     }
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+    uint8_t prev_step;
+
     if (htim->Instance != TIM2) {
         return;
     }
 
-    sensor_begin_step(g_scan_step);
+    prev_step = g_scan_step;
+    g_scan_step++;
+
+    if (g_scan_step >= SEN_NUM) {
+        g_scan_step = 0;
+    }
+
+    sensor_led_off(&scan_table[prev_step].led);
+    sensor_led_on(&scan_table[g_scan_step].led);
 }
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    const scan_step_t *p_step;
-
     if (htim->Instance != TIM2 || htim->Channel != HAL_TIM_ACTIVE_CHANNEL_2) {
         return;
-    }
-
-    p_step = &scan_table[g_scan_step];
-
-    if (HAL_ADC_Start_DMA(p_step->hadc_hi, (uint32_t *)&g_adc_buf_hi, 1) != HAL_OK) {
-        Error_Handler();
-    }
-
-    if (HAL_ADC_Start_DMA(p_step->hadc_lo, (uint32_t *)&g_adc_buf_lo, 1) != HAL_OK) {
-        Error_Handler();
     }
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-    sensor_store_dma_result(hadc);
+    uint8_t dma_mask = sensor_dma_mask_for_adc(hadc);
+
+    if (dma_mask == 0u) {
+        return;
+    }
+
+    g_dma_done_flags |= dma_mask;
+
+    if (g_dma_done_flags == 0x1Fu) {
+        g_dma_done_flags = 0u;
+        g_frame_ready = 1u;
+    }
 }
 
 void sen_vari_init(void)
@@ -377,6 +443,8 @@ static void mark_enable_shift( turnmark_t *pleft , turnmark_t *pright )
 
 void make_position(void)
 {
+    sensor_scan_poll();
+
     g_pos.iq17sum = 0.0f;
     g_pos.iq7sum_of_sec = 0.0f;
 

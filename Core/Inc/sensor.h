@@ -34,14 +34,8 @@ typedef struct {
 
 extern const scan_step_t scan_table[SEN_NUM];
 
-/* ──────────── DMA completion flags ──────────── */
-extern volatile uint8_t g_dma_done_flags;   /* bit0=Hi, bit1=Lo */
-
-/* ──────────── ADC DMA buffers ──────────── */
-extern volatile uint32_t g_adc_buf_hi;
-extern volatile uint32_t g_adc_buf_lo;
-
-/* ──────────── Current scan step ──────────── */
+/* ──────────── Scan state ──────────── */
+extern volatile uint8_t g_dma_done_flags;   
 extern volatile uint8_t g_scan_step;
 
 /* ──────────── Public functions ──────────── */
@@ -49,6 +43,7 @@ extern volatile uint8_t g_scan_step;
 /* Initialization */
 void sen_vari_init(void);
 void sensor_scan_start(void);
+void sensor_scan_poll(void);
 
 /* Calibration & display */
 void F_4095(void);

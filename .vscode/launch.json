@@ -2,17 +2,25 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "M4_STEP Debug (ST-LINK)",
+      "name": "M4_STEP Debug (OpenOCD CMSIS-DAP)",
       "type": "cortex-debug",
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "executable": "${workspaceFolder}/build/Debug/M4_STEP.elf",
-      "servertype": "stlink",
-      "serverpath": "${env:STM32CubeCLT_ROOT}\\STLink-gdb-server\\bin\\ST-LINK_gdbserver.exe",
-      "stm32cubeprogrammer": "${env:STM32CubeCLT_ROOT}\\STM32CubeProgrammer\\bin",
-      "gdbPath": "${env:STM32CubeCLT_ROOT}\\GNU-tools-for-STM32\\bin\\arm-none-eabi-gdb.exe",
-      "device": "STM32G474VE",
-      "interface": "swd",
+      "servertype": "openocd",
+      "serverpath": "C:/Users/rbgus/AppData/Local/Microsoft/WinGet/Packages/xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe/xpack-openocd-0.12.0-7/bin/openocd.exe",
+      "searchDir": [
+        "C:/Users/rbgus/AppData/Local/Microsoft/WinGet/Packages/xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe/xpack-openocd-0.12.0-7/openocd/scripts"
+      ],
+      "configFiles": [
+        "interface/cmsis-dap.cfg"
+      ],
+      "openOCDLaunchCommands": [
+        "transport select swd",
+        "adapter speed 1000",
+        "source [find target/stm32g4x.cfg]"
+      ],
+      "gdbPath": "${env:STM32CubeCLT_ROOT}/GNU-tools-for-STM32/bin/arm-none-eabi-gdb.exe",
       "runToEntryPoint": "main",
       "preLaunchTask": "cmake: build",
       "showDevDebugOutput": "raw"
