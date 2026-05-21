@@ -86,10 +86,35 @@ static void sensor_uart_diag_write(void)
 void sensor_uart_debug_poll(void)
 {
     static uint32_t last_uart_tick = 0;
+    static uint32_t last_sync_err = 0;
+    static uint8_t low_val_cnt = 0;
     uint32_t now = HAL_GetTick();
 
     if ((now - last_uart_tick) >= 100U) {
         last_uart_tick = now;
+
+        // [감시 Layer 1] EOC 하드웨어 동기화 불일치 증가 감지 시 자동 리셋
+        if (g_uart_diag_sync_err != last_sync_err) {
+            last_sync_err = g_uart_diag_sync_err;
+            sensor_scan_start();
+        }
+
+        // [감시 Layer 2] 만에 하나 위상 이탈로 모든 센서 값이 비정상(Dark) 고정 시 (500ms 누적) 자동 리셋
+        float total_sum = 0.0f;
+        for (int i = 0; i < ADC_NUM; i++) {
+            total_sum += g_sen[i].iq17_4095_value;
+        }
+
+        if (total_sum < 300.0f) {
+            low_val_cnt++;
+            if (low_val_cnt >= 5U) { // 500ms 동안 계속 바닥에 고정된 경우
+                low_val_cnt = 0U;
+                sensor_scan_start();
+            }
+        } else {
+            low_val_cnt = 0U;
+        }
+
         sensor_uart_diag_write();
     }
 }
@@ -110,25 +135,36 @@ static void sensor_set_active_step(uint8_t step)
 
 void sensor_scan_start(void)
 {
+    // 1. TIM2를 완전히 정지하고 카운터를 리셋하여 불시의 트리거를 방지
+    HAL_TIM_Base_Stop_IT(&htim2);
+    HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_2);
+    __HAL_TIM_SET_COUNTER(&htim2, 0);
+
+    // 2. ADC를 중지하여 내부 하드웨어 시퀀서를 Rank 1로 강제 리셋
+    HAL_ADC_Stop(&hadc1);
+    HAL_ADC_Stop_IT(&hadc2);
+
+    // 잔여 플래그 및 오버런 플래그 완벽하게 클리어
+    __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_EOC | ADC_FLAG_EOS | ADC_FLAG_OVR);
+    __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_EOC | ADC_FLAG_EOS | ADC_FLAG_OVR);
+
+    // 3. 아날로그 고정밀 측정을 위한 하드웨어 캘리브레이션 수행
+    HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+    HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+
     g_scan_step = 0;
     g_adc_step = 0;
 
-    sensor_set_active_step(0);
+    sensor_set_active_step(0); // LED 0 ON
 
-    // Clear any pending overrun flags to reset ADC error states
-    __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
-    __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
-
+    // 4. 타이머가 꺼진 안전한 상태에서 ADC들을 기동하여 대기시킴
+    hadc1.State = HAL_ADC_STATE_READY;
+    hadc2.State = HAL_ADC_STATE_READY;
     if (HAL_ADC_Start(&hadc1) != HAL_OK) Error_Handler();
     if (HAL_ADC_Start_IT(&hadc2) != HAL_OK) Error_Handler();
 
-    __HAL_TIM_SET_COUNTER(&htim2, 0);
-
+    // 5. 모든 준비가 끝난 후 TIM2를 켜서 완벽하게 정박자로 첫 트리거 공급
     if (HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2) != HAL_OK) {
-        Error_Handler();
-    }
-    
-    if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
         Error_Handler();
     }
 }

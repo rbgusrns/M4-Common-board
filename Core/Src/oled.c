@@ -134,17 +134,16 @@ static void OLED_UpdateBlocking(void);
 
 static uint32_t OLED_EnterCritical(void)
 {
-    uint32_t primask = __get_PRIMASK();
-    __disable_irq();
-    return primask;
+    uint32_t basepri = __get_BASEPRI();
+    // Block interrupts with priority 5 and below (i.e. priority 5-15, e.g. DMA priority 10),
+    // allowing ADC (priority 0) and TIM2 (priority 1) to run completely unhindered.
+    __set_BASEPRI(5U << 4U);
+    return basepri;
 }
 
 static void OLED_ExitCritical(uint32_t primask)
 {
-    if (primask == 0U)
-    {
-        __enable_irq();
-    }
+    __set_BASEPRI(primask);
 }
 
 static void OLED_Cmd(uint8_t cmd)
