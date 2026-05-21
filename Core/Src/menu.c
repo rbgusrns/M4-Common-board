@@ -74,9 +74,8 @@ void menu_start(void)
 
     while(1) 
     {     
-         sensor_scan_poll();
+         sensor_uart_debug_poll();
          menu();
-         sensor_scan_poll();
          HAL_Delay(1); // Small loop delay
     }
 }

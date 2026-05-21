@@ -31,6 +31,7 @@
 #include "menu.h"
 #include "sensor.h"
 #include "viper_variable.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,14 +98,20 @@ int main(void)
   MX_DMA_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
-  MX_ADC3_Init();
-  MX_ADC4_Init();
-  MX_ADC5_Init();
   MX_I2C2_Init();
   MX_SPI1_Init();
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  {
+    /*
+    const char boot_msg[] = "BOOT USART1 PB6 115200\r\n";
+    for (uint8_t i = 0; i < 5U; i++) {
+      HAL_UART_Transmit(&huart1, (uint8_t *)boot_msg, (uint16_t)strlen(boot_msg), 100U);
+      HAL_Delay(100U);
+    }
+      */
+  }
   sen_vari_init();
   menu_start();
   /* USER CODE END 2 */

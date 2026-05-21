@@ -1,40 +1,42 @@
-﻿#include "sensor.h"
+#include "sensor.h"
 #include "motor.h"
 #include "oled.h"
 #include "rom.h"
 #include "search.h"
 #include "fastrun.h"
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 volatile uint8_t g_scan_step = 0;
-volatile uint8_t g_dma_done_flags = 0;
+volatile uint8_t g_adc_step = 0;
 
-static volatile uint16_t g_adc1_dma_buf[SEN_NUM];
-static volatile uint16_t g_adc2_dma_buf[SEN_NUM];
-static volatile uint16_t g_adc3_dma_buf[SEN_NUM];
-static volatile uint16_t g_adc4_dma_buf[SEN_NUM];
-static volatile uint16_t g_adc5_dma_buf[SEN_NUM];
+volatile uint32_t g_uart_diag_adc1_dr = 0;
+volatile uint32_t g_uart_diag_adc2_dr = 0;
+volatile uint32_t g_uart_diag_adc1_isr = 0;
+volatile uint32_t g_uart_diag_adc2_isr = 0;
+volatile uint32_t g_uart_diag_sync_err = 0;
+volatile uint32_t g_uart_diag_ovr_cnt = 0;
+
+// DMA buffers and shadow buffers removed. Using direct array assignment.
 
 const scan_step_t scan_table[SEN_NUM] = {
-    { { L0_GPIO_Port, L0_Pin }, &hadc3, &hadc1, ADC_CHANNEL_2,  ADC_CHANNEL_1,  7, 15 },
-    { { L1_GPIO_Port, L1_Pin }, &hadc3, &hadc1, ADC_CHANNEL_4,  ADC_CHANNEL_2,  6, 14 },
-    { { L2_GPIO_Port, L2_Pin }, &hadc4, &hadc1, ADC_CHANNEL_5,  ADC_CHANNEL_3,  5, 13 },
-    { { L3_GPIO_Port, L3_Pin }, &hadc4, &hadc1, ADC_CHANNEL_12, ADC_CHANNEL_4,  4, 12 },
-    { { L4_GPIO_Port, L4_Pin }, &hadc4, &hadc2, ADC_CHANNEL_13, ADC_CHANNEL_3,  3, 11 },
-    { { L5_GPIO_Port, L5_Pin }, &hadc5, &hadc2, ADC_CHANNEL_7,  ADC_CHANNEL_4,  2, 10 },
-    { { L6_GPIO_Port, L6_Pin }, &hadc5, &hadc2, ADC_CHANNEL_8,  ADC_CHANNEL_5,  1,  9 },
-    { { L7_GPIO_Port, L7_Pin }, &hadc5, &hadc3, ADC_CHANNEL_9,  ADC_CHANNEL_1,  0,  8 },
+    { { L0_GPIO_Port, L0_Pin }, &hadc1, &hadc2, 0, 0,  8 },
+    { { L1_GPIO_Port, L1_Pin }, &hadc1, &hadc2, 1, 1,  9 },
+    { { L2_GPIO_Port, L2_Pin }, &hadc1, &hadc2, 2, 2, 10 },
+    { { L3_GPIO_Port, L3_Pin }, &hadc1, &hadc2, 3, 3, 11 },
+    { { L4_GPIO_Port, L4_Pin }, &hadc1, &hadc2, 4, 4, 12 },
+    { { L5_GPIO_Port, L5_Pin }, &hadc1, &hadc2, 5, 5, 13 },
+    { { L6_GPIO_Port, L6_Pin }, &hadc1, &hadc2, 6, 6, 14 },
+    { { L7_GPIO_Port, L7_Pin }, &hadc1, &hadc2, 7, 7, 15 },
 };
 
 static void sensor_emitters_off(void);
 static void sensor_set_active_step(uint8_t step);
 static void sensor_led_on(const led_pin_t *p_led);
 static void sensor_led_off(const led_pin_t *p_led);
-static volatile uint16_t *sensor_dma_buffer_for_adc(ADC_HandleTypeDef *hadc);
-static uint8_t sensor_dma_mask_for_adc(ADC_HandleTypeDef *hadc);
-static void sensor_copy_frame(void);
-static void sensor_start_adc_dma(ADC_HandleTypeDef *hadc, volatile uint16_t *p_buf);
+static void sensor_uart_diag_write(void);
+// DMA frame functions removed.
 
 const uint16_t state_table[18] = {
     0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff, 
@@ -51,10 +53,51 @@ static void sensor_led_off(const led_pin_t *p_led)
     p_led->port->BSRR = (uint32_t)p_led->pin << 16u;
 }
 
+static void sensor_uart_diag_write(void)
+{
+    char uart_buf[128];
+    uint8_t max_idx = 0U;
+    float max_value = g_sen[0].iq17_4095_value;
+
+    for (uint8_t i = 1U; i < ADC_NUM; i++) {
+        if (g_sen[i].iq17_4095_value > max_value) {
+            max_value = g_sen[i].iq17_4095_value;
+            max_idx = i;
+        }
+    }
+
+    int len = snprintf(uart_buf, sizeof(uart_buf),
+        "S0:%4d S8:%4d M:%u:%4d F:%lu ST:%u/%u ISR:%02lx/%02lx DR:%04lx/%04lx E:%lu O:%lu\r\n",
+        (int)g_sen[0].iq17_4095_value,
+        (int)g_sen[8].iq17_4095_value,
+        (unsigned int)max_idx,
+        (int)max_value,
+        (unsigned long)g_int32_isr_cnt,
+        (unsigned int)g_scan_step, (unsigned int)g_adc_step,
+        (unsigned long)g_uart_diag_adc1_isr, (unsigned long)g_uart_diag_adc2_isr,
+        (unsigned long)g_uart_diag_adc1_dr, (unsigned long)g_uart_diag_adc2_dr,
+        (unsigned long)g_uart_diag_sync_err, (unsigned long)g_uart_diag_ovr_cnt);
+
+    if (len > 0) {
+        HAL_UART_Transmit(&huart1, (uint8_t *)uart_buf, (uint16_t)len, 10);
+    }
+}
+
+void sensor_uart_debug_poll(void)
+{
+    static uint32_t last_uart_tick = 0;
+    uint32_t now = HAL_GetTick();
+
+    if ((now - last_uart_tick) >= 100U) {
+        last_uart_tick = now;
+        sensor_uart_diag_write();
+    }
+}
+
 static void sensor_emitters_off(void)
 {
-    GPIOC->BSRR = ((uint32_t)L0_Pin | (uint32_t)L1_Pin | (uint32_t)L2_Pin | (uint32_t)L6_Pin | (uint32_t)L7_Pin) << 16u;
-    GPIOF->BSRR = ((uint32_t)L3_Pin | (uint32_t)L4_Pin | (uint32_t)L5_Pin) << 16u;
+    GPIOC->BSRR = ((uint32_t)L0_Pin | (uint32_t)L1_Pin | (uint32_t)L5_Pin | (uint32_t)L6_Pin | (uint32_t)L7_Pin) << 16u;
+    GPIOF->BSRR = ((uint32_t)L2_Pin | (uint32_t)L3_Pin | (uint32_t)L4_Pin) << 16u;
 }
 
 static void sensor_set_active_step(uint8_t step)
@@ -65,113 +108,26 @@ static void sensor_set_active_step(uint8_t step)
     sensor_led_on(&p_step->led);
 }
 
-static volatile uint16_t *sensor_dma_buffer_for_adc(ADC_HandleTypeDef *hadc)
-{
-    if (hadc == &hadc1) {
-        return g_adc1_dma_buf;
-    }
-
-    if (hadc == &hadc2) {
-        return g_adc2_dma_buf;
-    }
-
-    if (hadc == &hadc3) {
-        return g_adc3_dma_buf;
-    }
-
-    if (hadc == &hadc4) {
-        return g_adc4_dma_buf;
-    }
-
-    if (hadc == &hadc5) {
-        return g_adc5_dma_buf;
-    }
-
-    return NULL;
-}
-
-static uint8_t sensor_dma_mask_for_adc(ADC_HandleTypeDef *hadc)
-{
-    if (hadc == &hadc1) {
-        return 0x01u;
-    }
-
-    if (hadc == &hadc2) {
-        return 0x02u;
-    }
-
-    if (hadc == &hadc3) {
-        return 0x04u;
-    }
-
-    if (hadc == &hadc4) {
-        return 0x08u;
-    }
-
-    if (hadc == &hadc5) {
-        return 0x10u;
-    }
-
-    return 0u;
-}
-
-static void sensor_copy_frame(void)
-{
-    uint8_t step;
-
-    for (step = 0; step < SEN_NUM; step++) {
-        const scan_step_t *p_step = &scan_table[step];
-        volatile uint16_t *p_hi_buf = sensor_dma_buffer_for_adc(p_step->hadc_hi);
-        volatile uint16_t *p_lo_buf = sensor_dma_buffer_for_adc(p_step->hadc_lo);
-
-        if ((p_hi_buf == NULL) || (p_lo_buf == NULL)) {
-            Error_Handler();
-        }
-
-        g_sen[p_step->sen_hi_idx].iq17_4095_value = (float)p_hi_buf[step];
-        g_sen[p_step->sen_lo_idx].iq17_4095_value = (float)p_lo_buf[step];
-    }
-}
-
-static void sensor_start_adc_dma(ADC_HandleTypeDef *hadc, volatile uint16_t *p_buf)
-{
-    if (HAL_ADC_Start_DMA(hadc, (uint32_t *)p_buf, SEN_NUM) != HAL_OK) {
-        Error_Handler();
-    }
-}
-
-void sensor_scan_poll(void)
-{
-}
-
 void sensor_scan_start(void)
 {
     g_scan_step = 0;
-    g_dma_done_flags = 0;
-
-    memset((void *)g_adc1_dma_buf, 0, sizeof(g_adc1_dma_buf));
-    memset((void *)g_adc2_dma_buf, 0, sizeof(g_adc2_dma_buf));
-    memset((void *)g_adc3_dma_buf, 0, sizeof(g_adc3_dma_buf));
-    memset((void *)g_adc4_dma_buf, 0, sizeof(g_adc4_dma_buf));
-    memset((void *)g_adc5_dma_buf, 0, sizeof(g_adc5_dma_buf));
-
-    sensor_start_adc_dma(&hadc1, g_adc1_dma_buf);
-    sensor_start_adc_dma(&hadc2, g_adc2_dma_buf);
-    sensor_start_adc_dma(&hadc3, g_adc3_dma_buf);
-    sensor_start_adc_dma(&hadc4, g_adc4_dma_buf);
-    sensor_start_adc_dma(&hadc5, g_adc5_dma_buf);
+    g_adc_step = 0;
 
     sensor_set_active_step(0);
+
+    // Clear any pending overrun flags to reset ADC error states
+    __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
+    __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
+
+    if (HAL_ADC_Start(&hadc1) != HAL_OK) Error_Handler();
+    if (HAL_ADC_Start_IT(&hadc2) != HAL_OK) Error_Handler();
+
     __HAL_TIM_SET_COUNTER(&htim2, 0);
 
-    if (HAL_TIM_OC_Start(&htim2, TIM_CHANNEL_2) != HAL_OK) {
+    if (HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2) != HAL_OK) {
         Error_Handler();
     }
     
-    if (HAL_TIM_OC_Start_IT(&htim2, TIM_CHANNEL_3) != HAL_OK) {
-        Error_Handler();
-    }
-
     if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK) {
         Error_Handler();
     }
@@ -179,49 +135,143 @@ void sensor_scan_start(void)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    uint8_t prev_step;
-
-    if (htim->Instance != TIM2) {
+    if (htim->Instance == TIM2) {
         return;
     }
-
-    prev_step = g_scan_step;
-    g_scan_step++;
-
-    if (g_scan_step >= SEN_NUM) {
-        g_scan_step = 0;
-    }
-
-    sensor_led_off(&scan_table[prev_step].led);
-    sensor_led_on(&scan_table[g_scan_step].led);
 }
 
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 {
-    if (htim->Instance != TIM2) {
-        return;
-    }
-
-    if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3) {
-        sensor_led_off(&scan_table[g_scan_step].led);
-    }
+    (void)htim;
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-    uint8_t dma_mask = sensor_dma_mask_for_adc(hadc);
+    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_SET); // Debug pin toggle for timing analysis
+    if (hadc == &hadc2) {
+        uint8_t step = g_adc_step;
+        const scan_step_t *p_step = &scan_table[step];
 
-    if (dma_mask == 0u) {
-        return;
+        g_uart_diag_adc1_isr = hadc1.Instance->ISR;
+        g_uart_diag_adc2_isr = hadc2.Instance->ISR;
+
+        if ((g_uart_diag_adc1_isr & ADC_FLAG_EOC) == 0U) {
+            g_uart_diag_sync_err++;
+        }
+
+        uint32_t val_hi = hadc1.Instance->DR;
+        uint32_t val_lo = hadc2.Instance->DR;
+
+        g_uart_diag_adc1_dr = val_hi;
+        g_uart_diag_adc2_dr = val_lo;
+
+        // Auto-clear overrun flags if they occurred to prevent ADC lockup
+        if (g_uart_diag_adc1_isr & ADC_FLAG_OVR) {
+            __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
+        }
+        if (g_uart_diag_adc2_isr & ADC_FLAG_OVR) {
+            __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
+        }
+
+        uint8_t hi_idx = p_step->sen_hi_idx;
+        uint8_t lo_idx = p_step->sen_lo_idx;
+
+        g_sen[hi_idx].iq17_4095_value = (float)val_hi;
+        g_sen[lo_idx].iq17_4095_value = (float)val_lo;
+
+        sensor_led_off(&p_step->led);
+
+        // Immediate normalization and state update for hi sensor inside the ISR (aligned to Viper)
+        {
+            float val = g_sen[hi_idx].iq17_4095_value;
+            float max_val = g_sen[hi_idx].iq17_4095_max_value;
+            float min_val = g_sen[hi_idx].iq17_4095_min_value;
+
+            if (val > max_val) {
+                g_sen[hi_idx].iq17_127_value = 127.0f;
+            } else if (val < min_val) {
+                g_sen[hi_idx].iq17_127_value = 0.0f;
+            } else {
+                float denom = max_val - min_val;
+                if (denom <= 0.0f) denom = 1.0f;
+                g_sen[hi_idx].iq17_127_value = ((val - min_val) * 127.0f) / denom;
+            }
+
+            if (g_sen[hi_idx].iq17_127_value < 35.0f) {
+                g_sen[hi_idx].iq17_ON_OFF_value = 0.0f;
+            } else {
+                g_sen[hi_idx].iq17_ON_OFF_value = 1.0f;
+            }
+
+            if (g_sen[hi_idx].iq17_127_value > 60.0f) {
+                g_pos.u16state |= g_sen[hi_idx].u16active_arr;
+                g_Flag.lineout_flag = OFF;
+            } else {
+                g_pos.u16state &= g_sen[hi_idx].u16passive_arr;
+            }
+        }
+
+        // Immediate normalization and state update for lo sensor inside the ISR (aligned to Viper)
+        {
+            float val = g_sen[lo_idx].iq17_4095_value;
+            float max_val = g_sen[lo_idx].iq17_4095_max_value;
+            float min_val = g_sen[lo_idx].iq17_4095_min_value;
+
+            if (val > max_val) {
+                g_sen[lo_idx].iq17_127_value = 127.0f;
+            } else if (val < min_val) {
+                g_sen[lo_idx].iq17_127_value = 0.0f;
+            } else {
+                float denom = max_val - min_val;
+                if (denom <= 0.0f) denom = 1.0f;
+                g_sen[lo_idx].iq17_127_value = ((val - min_val) * 127.0f) / denom;
+            }
+
+            if (g_sen[lo_idx].iq17_127_value < 35.0f) {
+                g_sen[lo_idx].iq17_ON_OFF_value = 0.0f;
+            } else {
+                g_sen[lo_idx].iq17_ON_OFF_value = 1.0f;
+            }
+
+            if (g_sen[lo_idx].iq17_127_value > 60.0f) {
+                g_pos.u16state |= g_sen[lo_idx].u16active_arr;
+                g_Flag.lineout_flag = OFF;
+            } else {
+                g_pos.u16state &= g_sen[lo_idx].u16passive_arr;
+            }
+        }
+
+        g_adc_step++;
+        if (g_adc_step >= SEN_NUM) {
+            g_adc_step = 0;
+            g_int32_isr_cnt++;
+        }
+        g_scan_step = g_adc_step;
+        sensor_led_on(&scan_table[g_scan_step].led);
     }
+    //HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET); // Debug pin toggle for timing analysis
+}
 
-    g_dma_done_flags |= dma_mask;
-
-    if (g_dma_done_flags == 0x1Fu) {
-        g_dma_done_flags = 0u;
-        sensor_copy_frame();
-        sensor_check_127();
-        g_int32_isr_cnt++;
+void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc == &hadc1 || hadc == &hadc2) {
+        if (hadc->ErrorCode & HAL_ADC_ERROR_OVR) {
+            g_uart_diag_ovr_cnt++;
+            
+            // Clear overrun flag for both ADCs to reset their error states
+            __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
+            __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
+            
+            hadc1.State = HAL_ADC_STATE_READY;
+            hadc2.State = HAL_ADC_STATE_READY;
+            
+            // Reset scan steps to ensure left/right sensor index synchronization
+            g_adc_step = 0;
+            
+            // Restart both ADCs synchronously
+            (void)HAL_ADC_Start(&hadc1);
+            (void)HAL_ADC_Start_IT(&hadc2);
+        }
     }
 }
 
@@ -253,6 +303,8 @@ void sen_vari_init(void)
     g_sen[ 2 ].iq7weight = -11000.0f;       g_sen[ 13 ].u16active_arr = 0x0004;     g_sen[ 13 ].u16passive_arr = 0xfffb;
     g_sen[ 1 ].iq7weight = -13000.0f;       g_sen[ 14 ].u16active_arr = 0x0002;     g_sen[ 14 ].u16passive_arr = 0xfffd;
     g_sen[ 0 ].iq7weight = -16000.0f;       g_sen[ 15 ].u16active_arr = 0x0001;     g_sen[ 15 ].u16passive_arr = 0xfffe;
+
+    maxmin_read_rom();
 }
 
 static void position_enable(position_t *ppos)
@@ -438,8 +490,6 @@ static void mark_enable_shift( turnmark_t *pleft , turnmark_t *pright )
 
 void make_position(void)
 {
-    sensor_scan_poll();
-
     g_pos.iq17sum = 0.0f;
     g_pos.iq7sum_of_sec = 0.0f;
 
@@ -664,6 +714,8 @@ void F_4095()
         if (a < 0) a = 15;
         else if (a > 15) a = 0;
         
+        sensor_uart_debug_poll();
+
         OLED_Printf(1U, 0U, "I:%ld", g_int32_isr_cnt);
         OLED_Printf(0U, 0U, "S%d:%4d", a, (int)(g_sen[a].iq17_4095_value)); 
     } while(SW_D); 
@@ -795,30 +847,6 @@ void F_TURNMARK()
         else if(!SW_U) cnt+=10;
 
         OLED_Printf(0U, 0U, "T%d:%3lu", cnt, search_info[cnt].int32turn_way);
-    }
-}
-
-void sensor_check_127(void)
-{
-    // Sensor normalize (ADC raw to 0..127)
-    for(int i = 0; i < 16; i++) {
-        // g_sen[i].iq17_4095_value is updated after all ADC DMA buffers complete.
-        float denom = g_sen[i].iq17_4095_max_value - g_sen[i].iq17_4095_min_value;
-        if(denom <= 0.0f) denom = 1.0f; // Division by zero protection
-
-        g_sen[i].iq17_127_value = ((g_sen[i].iq17_4095_max_value - g_sen[i].iq17_4095_value) * 127.0f) / denom;
-
-        if(g_sen[i].iq17_127_value < 0.0f) g_sen[i].iq17_127_value = 0.0f;
-        if(g_sen[i].iq17_127_value > 127.0f) g_sen[i].iq17_127_value = 127.0f;
-
-        // u16state update with hysteresis (35 ~ 60)
-        if (g_sen[i].iq17_127_value > 60.0f) {
-            g_sen[i].iq17_ON_OFF_value = 1.0f;
-            g_pos.u16state |= g_sen[i].u16active_arr;
-        } else if (g_sen[i].iq17_127_value < 35.0f) {
-            g_sen[i].iq17_ON_OFF_value = 0.0f;
-            g_pos.u16state &= g_sen[i].u16passive_arr;
-        }
     }
 }
 

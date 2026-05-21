@@ -53,11 +53,14 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, L7_Pin|L6_Pin|L2_Pin|L1_Pin
-                          |L0_Pin|LA__Pin|LB_Pin|LB__Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, L0_Pin|L1_Pin|L5_Pin|L6_Pin
+                          |L7_Pin|LA__Pin|LB_Pin|LB__Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOF, L5_Pin|L4_Pin|L3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOF, L2_Pin|L3_Pin|L4_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LA_GPIO_Port, LA_Pin, GPIO_PIN_RESET);
@@ -66,21 +69,28 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, RA_Pin|RA__Pin|RB_Pin|RB__Pin
                           |SPI1_CS_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : L7_Pin L6_Pin L2_Pin L1_Pin
-                           L0_Pin */
-  GPIO_InitStruct.Pin = L7_Pin|L6_Pin|L2_Pin|L1_Pin
-                          |L0_Pin;
+  /*Configure GPIO pins : L0_Pin L1_Pin L5_Pin L6_Pin
+                           L7_Pin */
+  GPIO_InitStruct.Pin = L0_Pin|L1_Pin|L5_Pin|L6_Pin
+                          |L7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : L5_Pin L4_Pin L3_Pin */
-  GPIO_InitStruct.Pin = L5_Pin|L4_Pin|L3_Pin;
+  /*Configure GPIO pins : L2_Pin L3_Pin L4_Pin */
+  GPIO_InitStruct.Pin = L2_Pin|L3_Pin|L4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PE10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SW_R_Pin */
   GPIO_InitStruct.Pin = SW_R_Pin;

@@ -26,8 +26,7 @@ typedef struct {
     led_pin_t       led;            /* Emitter LED GPIO */
     ADC_HandleTypeDef *hadc_hi;     /* ADC for Hi sensor (S7→S0) */
     ADC_HandleTypeDef *hadc_lo;     /* ADC for Lo sensor (S15→S8) */
-    uint32_t        adc_hi_channel; /* ADC regular channel for Hi */
-    uint32_t        adc_lo_channel; /* ADC regular channel for Lo */
+    uint8_t         dma_rank_idx;   /* Shared ADC DMA frame index for this step */
     uint8_t         sen_hi_idx;     /* Index into g_sen[] for Hi */
     uint8_t         sen_lo_idx;     /* Index into g_sen[] for Lo */
 } scan_step_t;
@@ -35,7 +34,6 @@ typedef struct {
 extern const scan_step_t scan_table[SEN_NUM];
 
 /* ──────────── Scan state ──────────── */
-extern volatile uint8_t g_dma_done_flags;   
 extern volatile uint8_t g_scan_step;
 
 /* ──────────── Public functions ──────────── */
@@ -43,7 +41,7 @@ extern volatile uint8_t g_scan_step;
 /* Initialization */
 void sen_vari_init(void);
 void sensor_scan_start(void);
-void sensor_scan_poll(void);
+void sensor_uart_debug_poll(void);
 
 /* Calibration & display */
 void F_4095(void);
@@ -65,8 +63,5 @@ void turn_decide(turnmark_t *p_mark, turnmark_t *p_remark);
 void start_end_check(void);
 void line_info(turnmark_t *p_mark);
 int  line_out_func(void);
-
-/* Sensor check */
-void sensor_check_127(void);
 
 #endif /* __SENSOR_H__ */
