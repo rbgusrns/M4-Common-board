@@ -134,16 +134,12 @@ static void OLED_UpdateBlocking(void);
 
 static uint32_t OLED_EnterCritical(void)
 {
-    uint32_t basepri = __get_BASEPRI();
-    // Block interrupts with priority 5 and below (i.e. priority 5-15, e.g. DMA priority 10),
-    // allowing ADC (priority 0) and TIM2 (priority 1) to run completely unhindered.
-    __set_BASEPRI(5U << 4U);
-    return basepri;
+    return 0U;
 }
 
 static void OLED_ExitCritical(uint32_t primask)
 {
-    __set_BASEPRI(primask);
+    (void)primask;
 }
 
 static void OLED_Cmd(uint8_t cmd)
@@ -199,22 +195,12 @@ void OLED_Clear(void)
 
 uint8_t OLED_IsBusy(void)
 {
-    return oled_dma_busy;
+    return 0U;
 }
 
 void OLED_Update(void)
 {
-    uint32_t primask = OLED_EnterCritical();
-
-    if (oled_dma_busy != 0U)
-    {
-        oled_update_pending = 1U;
-        OLED_ExitCritical(primask);
-        return;
-    }
-
-    OLED_ExitCritical(primask);
-    OLED_StartDmaFrame();
+    OLED_UpdateBlocking();
 }
 
 void OLED_Print(uint8_t row, uint8_t col, const char *str)
@@ -375,6 +361,8 @@ static void OLED_UpdateBlocking(void)
 {
     uint8_t data[OLED_DMA_TX_SIZE];
 
+    memcpy(frame_buffer, draw_buffer, sizeof(frame_buffer));
+
     for (uint8_t page = 0U; page < OLED_PAGE_COUNT; page++)
     {
         OLED_Cmd((uint8_t)(0xB0U + page));
@@ -385,4 +373,53 @@ static void OLED_UpdateBlocking(void)
         memcpy(&data[1], &frame_buffer[(uint16_t)page * OLED_WIDTH], OLED_WIDTH);
         (void)HAL_I2C_Master_Transmit(&hi2c2, OLED_ADDR, data, OLED_DMA_TX_SIZE, 100U);
     }
+}
+
+void OLED_DrawSensorBars(const float values[16])
+{
+    memset(draw_buffer, 0, sizeof(draw_buffer));
+
+    for (uint8_t i = 0U; i < 16U; i++)
+    {
+        float val = values[i];
+        if (val < 0.0f)
+        {
+            val = 0.0f;
+        }
+        if (val > 127.0f)
+        {
+            val = 127.0f;
+        }
+
+        uint8_t h = (uint8_t)((val * 32.0f) / 127.0f + 0.5f);
+        if (h > 32U)
+        {
+            h = 32U;
+        }
+
+        uint8_t col_start = i * 8U;
+
+        for (uint8_t x = col_start + 1U; x <= col_start + 6U; x++)
+        {
+            for (uint8_t page = 0U; page < OLED_PAGE_COUNT; page++)
+            {
+                uint8_t byte_val = 0U;
+                for (uint8_t bit = 0U; bit < 8U; bit++)
+                {
+                    uint8_t y = (page * 8U) + bit;
+                    if (y >= (32U - h))
+                    {
+                        byte_val |= (1U << bit);
+                    }
+                }
+                draw_buffer[(uint16_t)page * OLED_WIDTH + x] = byte_val;
+            }
+        }
+    }
+    OLED_Update();
+}
+
+void OLED_ClearBuffer(void)
+{
+    memset(draw_buffer, 0, sizeof(draw_buffer));
 }

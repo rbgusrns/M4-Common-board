@@ -13,6 +13,8 @@ void OLED_Update(void);
 uint8_t OLED_IsBusy(void);
 void OLED_Print(uint8_t row, uint8_t col, const char *str);
 void OLED_Printf(uint8_t row, uint8_t col, const char *fmt, ...);
+void OLED_DrawSensorBars(const float values[16]);
+void OLED_ClearBuffer(void);
 
 extern const uint8_t font5x7[95][5];
 

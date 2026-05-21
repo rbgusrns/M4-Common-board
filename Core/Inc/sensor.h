@@ -41,7 +41,6 @@ extern volatile uint8_t g_scan_step;
 /* Initialization */
 void sen_vari_init(void);
 void sensor_scan_start(void);
-void sensor_uart_debug_poll(void);
 
 /* Calibration & display */
 void F_4095(void);

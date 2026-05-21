@@ -4,7 +4,7 @@
 #include "viper_variable.h"
 
 #define ROW 4
-#define COLUMN 6
+#define COLUMN 5
 
 void menu(void);
 void menu_start(void);

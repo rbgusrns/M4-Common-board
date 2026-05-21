@@ -11,15 +11,6 @@
 volatile uint8_t g_scan_step = 0;
 volatile uint8_t g_adc_step = 0;
 
-volatile uint32_t g_uart_diag_adc1_dr = 0;
-volatile uint32_t g_uart_diag_adc2_dr = 0;
-volatile uint32_t g_uart_diag_adc1_isr = 0;
-volatile uint32_t g_uart_diag_adc2_isr = 0;
-volatile uint32_t g_uart_diag_sync_err = 0;
-volatile uint32_t g_uart_diag_ovr_cnt = 0;
-
-// DMA buffers and shadow buffers removed. Using direct array assignment.
-
 const scan_step_t scan_table[SEN_NUM] = {
     { { L0_GPIO_Port, L0_Pin }, &hadc1, &hadc2, 0, 0,  8 },
     { { L1_GPIO_Port, L1_Pin }, &hadc1, &hadc2, 1, 1,  9 },
@@ -35,8 +26,6 @@ static void sensor_emitters_off(void);
 static void sensor_set_active_step(uint8_t step);
 static void sensor_led_on(const led_pin_t *p_led);
 static void sensor_led_off(const led_pin_t *p_led);
-static void sensor_uart_diag_write(void);
-// DMA frame functions removed.
 
 const uint16_t state_table[18] = {
     0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff, 
@@ -53,71 +42,6 @@ static void sensor_led_off(const led_pin_t *p_led)
     p_led->port->BSRR = (uint32_t)p_led->pin << 16u;
 }
 
-static void sensor_uart_diag_write(void)
-{
-    char uart_buf[128];
-    uint8_t max_idx = 0U;
-    float max_value = g_sen[0].iq17_4095_value;
-
-    for (uint8_t i = 1U; i < ADC_NUM; i++) {
-        if (g_sen[i].iq17_4095_value > max_value) {
-            max_value = g_sen[i].iq17_4095_value;
-            max_idx = i;
-        }
-    }
-
-    int len = snprintf(uart_buf, sizeof(uart_buf),
-        "S0:%4d S8:%4d M:%u:%4d F:%lu ST:%u/%u ISR:%02lx/%02lx DR:%04lx/%04lx E:%lu O:%lu\r\n",
-        (int)g_sen[0].iq17_4095_value,
-        (int)g_sen[8].iq17_4095_value,
-        (unsigned int)max_idx,
-        (int)max_value,
-        (unsigned long)g_int32_isr_cnt,
-        (unsigned int)g_scan_step, (unsigned int)g_adc_step,
-        (unsigned long)g_uart_diag_adc1_isr, (unsigned long)g_uart_diag_adc2_isr,
-        (unsigned long)g_uart_diag_adc1_dr, (unsigned long)g_uart_diag_adc2_dr,
-        (unsigned long)g_uart_diag_sync_err, (unsigned long)g_uart_diag_ovr_cnt);
-
-    if (len > 0) {
-        HAL_UART_Transmit(&huart1, (uint8_t *)uart_buf, (uint16_t)len, 10);
-    }
-}
-
-void sensor_uart_debug_poll(void)
-{
-    static uint32_t last_uart_tick = 0;
-    static uint32_t last_sync_err = 0;
-    static uint8_t low_val_cnt = 0;
-    uint32_t now = HAL_GetTick();
-
-    if ((now - last_uart_tick) >= 100U) {
-        last_uart_tick = now;
-
-        // [감시 Layer 1] EOC 하드웨어 동기화 불일치 증가 감지 시 자동 리셋
-        if (g_uart_diag_sync_err != last_sync_err) {
-            last_sync_err = g_uart_diag_sync_err;
-            sensor_scan_start();
-        }
-
-        // [감시 Layer 2] 만에 하나 위상 이탈로 모든 센서 값이 비정상(Dark) 고정 시 (500ms 누적) 자동 리셋
-        float total_sum = 0.0f;
-        for (int i = 0; i < ADC_NUM; i++) {
-            total_sum += g_sen[i].iq17_4095_value;
-        }
-
-        if (total_sum < 300.0f) {
-            low_val_cnt++;
-            if (low_val_cnt >= 5U) { // 500ms 동안 계속 바닥에 고정된 경우
-                low_val_cnt = 0U;
-                sensor_scan_start();
-            }
-        } else {
-            low_val_cnt = 0U;
-        }
-
-        sensor_uart_diag_write();
-    }
-}
 
 static void sensor_emitters_off(void)
 {
@@ -183,29 +107,20 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-    HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_SET); // Debug pin toggle for timing analysis
     if (hadc == &hadc2) {
         uint8_t step = g_adc_step;
         const scan_step_t *p_step = &scan_table[step];
 
-        g_uart_diag_adc1_isr = hadc1.Instance->ISR;
-        g_uart_diag_adc2_isr = hadc2.Instance->ISR;
-
-        if ((g_uart_diag_adc1_isr & ADC_FLAG_EOC) == 0U) {
-            g_uart_diag_sync_err++;
-        }
-
         uint32_t val_hi = hadc1.Instance->DR;
         uint32_t val_lo = hadc2.Instance->DR;
 
-        g_uart_diag_adc1_dr = val_hi;
-        g_uart_diag_adc2_dr = val_lo;
-
         // Auto-clear overrun flags if they occurred to prevent ADC lockup
-        if (g_uart_diag_adc1_isr & ADC_FLAG_OVR) {
+        uint32_t isr1 = hadc1.Instance->ISR;
+        uint32_t isr2 = hadc2.Instance->ISR;
+        if (isr1 & ADC_FLAG_OVR) {
             __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
         }
-        if (g_uart_diag_adc2_isr & ADC_FLAG_OVR) {
+        if (isr2 & ADC_FLAG_OVR) {
             __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
         }
 
@@ -285,15 +200,12 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         g_scan_step = g_adc_step;
         sensor_led_on(&scan_table[g_scan_step].led);
     }
-    //HAL_GPIO_WritePin(GPIOE, GPIO_PIN_10, GPIO_PIN_RESET); // Debug pin toggle for timing analysis
 }
 
 void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
 {
     if (hadc == &hadc1 || hadc == &hadc2) {
         if (hadc->ErrorCode & HAL_ADC_ERROR_OVR) {
-            g_uart_diag_ovr_cnt++;
-            
             // Clear overrun flag for both ADCs to reset their error states
             __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
             __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
@@ -732,28 +644,44 @@ void line_info(turnmark_t *p_mark)
 
 void F_4095()
 {
-    a = 0;
-    OLED_Printf(0U, 0U, "        ");
+    uint8_t page_idx = 0; // 0: S0~S7, 1: S8~S15
+    OLED_Clear();
+
     do
     {
-        if (!SW_R)    
+        if (!SW_R || !SW_L)
         {
-            a++; 
-            HAL_Delay(100);
-        }
-        else if (!SW_L)    
-        {
-            a--; 
-            HAL_Delay(100);
+            page_idx = !page_idx;
+            OLED_Clear();
+            HAL_Delay(200);
         }
 
-        if (a < 0) a = 15;
-        else if (a > 15) a = 0;
-        
-        sensor_uart_debug_poll();
+        char buf_left[16];
+        char buf_right[16];
 
-        OLED_Printf(1U, 0U, "I:%ld", g_int32_isr_cnt);
-        OLED_Printf(0U, 0U, "S%d:%4d", a, (int)(g_sen[a].iq17_4095_value)); 
+        if (page_idx == 0)
+        {
+            for (uint8_t row = 0; row < 4; row++)
+            {
+                snprintf(buf_left, sizeof(buf_left), "S%d:%4d", row, (int)(g_sen[row].iq17_4095_value));
+                snprintf(buf_right, sizeof(buf_right), "S%d:%4d", row + 4, (int)(g_sen[row + 4].iq17_4095_value));
+                OLED_Print(row, 0U, buf_left);
+                OLED_Print(row, 11U, buf_right);
+            }
+        }
+        else
+        {
+            for (uint8_t row = 0; row < 4; row++)
+            {
+                snprintf(buf_left, sizeof(buf_left), "S%d:%4d", row + 8, (int)(g_sen[row + 8].iq17_4095_value));
+                snprintf(buf_right, sizeof(buf_right), "S%d:%4d", row + 12, (int)(g_sen[row + 12].iq17_4095_value));
+                OLED_Print(row, 0U, buf_left);
+                OLED_Print(row, 11U, buf_right);
+            }
+        }
+
+        OLED_Update();
+        HAL_Delay(20);
     } while(SW_D); 
 
     a = 2;
@@ -797,26 +725,18 @@ void F_Max_min()
 
 void F_127()
 {    
-    a = 0;
-    OLED_Printf(0U, 0U, "        ");
+    OLED_Clear();
     
     do
     {
-        if (!SW_R)
+        float sensor_vals[16];
+        for (int i = 0; i < 16; i++)
         {
-            a++; 
-            HAL_Delay(100);
-        }
-        else if (!SW_L)
-        {
-            a--; 
-            HAL_Delay(100);
+            sensor_vals[i] = g_sen[i].iq17_127_value;
         }
 
-        if (a < 0) a = 15;
-        else if (a > 15) a = 0;
-
-        OLED_Printf(0U, 0U, "S%d:%d", a, (int)(g_sen[a].iq17_127_value)); 
+        OLED_DrawSensorBars(sensor_vals);
+        HAL_Delay(10);
     } while(SW_D); 
 
     a = 3;
