@@ -1,0 +1,4 @@
+# CMake generation dependency list for this directory.
+C:/ST/STM32CubeCLT_1.21.0/CMake/share/cmake-3.28/Modules/CMakeASMInformation.cmake
+C:/ST/STM32CubeCLT_1.21.0/CMake/share/cmake-3.28/Modules/Compiler/MSVC-ASM.cmake
+C:/STproject/M4_STEP/cmake/stm32cubemx/CMakeLists.txt

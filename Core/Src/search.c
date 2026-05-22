@@ -6,6 +6,7 @@
 
 void Race_Init()
 {
+    Variable_Init();
     g_Flag.move_state = OFF;
     g_Flag.Lturnmark_flag=OFF;
     g_Flag.Rturnmark_flag=OFF;

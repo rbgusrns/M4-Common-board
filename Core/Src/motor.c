@@ -155,6 +155,7 @@ void F_VELOCITY()
             g_u32_VEL_targetval -= 50;
         }
     }
+    g_q17user_vel = (float)g_u32_VEL_targetval / 128.0f;
     write_vel_rom();
     a = 1;
     b = 0;
@@ -197,13 +198,11 @@ void Motor_CalBaseMotionValue( MOTORCTRL *pM )
         pM->iqAmpyS = STEP_2D * pM->iqTargetA; 
         pM->iqNextV = sqrtf(pM->iqAmpyS + pM->iqVelo * pM->iqVelo); 
         
-        pM->iq24TargetA_1 = pM->iqTargetA * 0.01f * 128.0f;
-        pM->iq24TargetA_1 = 1.0f / pM->iq24TargetA_1; 
-        pM->iq24TargetA_1 = pM->iq24TargetA_1 * 0.01f;
+        pM->iq24TargetA_1 = 1.0f / pM->iqTargetA; 
         
         pM->iq24TimeValue = (pM->iqNextV - pM->iqVelo) * pM->iq24TargetA_1;
         
-        pM->u32_Period = (uint32_t)((40000.0f * pM->iq24TimeValue * pM->iqHandle) / 131072.0f);    
+        pM->u32_Period = (uint32_t)(40000.0f * pM->iq24TimeValue * pM->iqHandle);    
                                                                                                      
         pM->u32_Period_Cnt = 0;    
 
@@ -217,13 +216,11 @@ void Motor_CalBaseMotionValue( MOTORCTRL *pM )
         float val = pM->iqVelo * pM->iqVelo - pM->iqAmpyS;
         pM->iqNextV = (val > 0.0f) ? sqrtf(val) : 0.0f;
         
-        pM->iq24TargetA_1 = pM->iqTargetA * 0.01f * 128.0f;
-        pM->iq24TargetA_1 = 1.0f / pM->iq24TargetA_1;
-        pM->iq24TargetA_1 = pM->iq24TargetA_1 * 0.01f;
+        pM->iq24TargetA_1 = 1.0f / pM->iqTargetA;
 
         pM->iq24TimeValue = (pM->iqVelo - pM->iqNextV) * pM->iq24TargetA_1;
 
-        pM->u32_Period = (uint32_t)((40000.0f * pM->iq24TimeValue * pM->iqHandle) / 131072.0f);
+        pM->u32_Period = (uint32_t)(40000.0f * pM->iq24TimeValue * pM->iqHandle);
 
         pM->u32_Period_Cnt = 0;
 

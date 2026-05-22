@@ -192,10 +192,34 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
             }
         }
 
+        // 2. 틱 플래그 및 주행 타임 카운터 매 인터럽트마다 누적 (C2000과 정합성 확보)
+        g_int32_isr_cnt++;
+
+        if (g_Flag.motor) {
+            g_i32_Time_index++;
+
+            // 왼쪽 모터 가속도 및 분주 제어
+            if (++LMotor.u32_Period_Cnt >= LMotor.u32_Period) {
+                Motor_CalBaseMotionValue(&LMotor);
+                g_u32_L_index++;
+                left_motor_step(g_u32_L_index);
+                L_Motor_ON(&LMotor);
+            }
+
+            // 오른쪽 모터 가속도 및 분주 제어
+            if (++RMotor.u32_Period_Cnt >= RMotor.u32_Period) {
+                Motor_CalBaseMotionValue(&RMotor);
+                g_u32_R_index++;
+                right_motor_step(g_u32_R_index);
+                R_Motor_ON(&RMotor);
+            }
+        } else {
+            motor_stop_all();
+        }
+
         g_adc_step++;
         if (g_adc_step >= SEN_NUM) {
             g_adc_step = 0;
-            g_int32_isr_cnt++;
         }
         g_scan_step = g_adc_step;
         sensor_led_on(&scan_table[g_scan_step].led);

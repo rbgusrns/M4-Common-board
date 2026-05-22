@@ -237,5 +237,6 @@ extern const uint32_t right_step_bsrr[4];
 void left_motor_step(uint32_t index);
 void right_motor_step(uint32_t index);
 void motor_stop_all(void);
+void Variable_Init(void);
 
 #endif /* __VIPER_VARIABLE_H__ */

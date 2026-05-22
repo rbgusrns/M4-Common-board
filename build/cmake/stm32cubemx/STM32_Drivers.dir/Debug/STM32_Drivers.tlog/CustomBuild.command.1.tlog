@@ -1,0 +1,10 @@
+^C:\STPROJECT\M4_STEP\CMAKE\STM32CUBEMX\CMAKELISTS.TXT
+setlocal
+C:\ST\STM32CubeCLT_1.21.0\CMake\bin\cmake.exe -SC:/STproject/M4_STEP -BC:/STproject/M4_STEP/build --check-stamp-file C:/STproject/M4_STEP/build/cmake/stm32cubemx/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

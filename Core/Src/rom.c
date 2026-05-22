@@ -1,26 +1,127 @@
 #include "rom.h"
+#include "spi.h"
 #include <string.h>
 
-// Mock SPI ROM for now (until actual Flash/EEPROM routines are integrated)
-#define SIMULATED_EEPROM_SIZE 4096
-static uint8_t simulated_eeprom[SIMULATED_EEPROM_SIZE] = {0};
+static inline void SPI_CS_DELAY(void)
+{
+    volatile uint32_t cnt = 0x1000;
+    while (cnt--) {
+        __NOP();
+        __NOP();
+    }
+}
+
+static inline void SPI1_CS_H(void)
+{
+    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+}
+
+static inline void SPI1_CS_L(void)
+{
+    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+}
+
+static uint8_t SpiTx(uint8_t tx_data)
+{
+    uint8_t rx_data = 0;
+    HAL_SPI_TransmitReceive(&hspi1, &tx_data, &rx_data, 1, 100);
+    return rx_data;
+}
+
+void SpiBusyOK(void)
+{	
+	uint8_t StatusReg = 0;
+
+	while((StatusReg & 0x08) != 0x08)
+	{
+		SPI1_CS_H();
+		SPI_CS_DELAY();
+		SPI1_CS_L();
+		SPI_CS_DELAY();
+		
+		SpiTx(0xd7); // STATUS_REG_READ
+		StatusReg = SpiTx(0);
+
+		SPI1_CS_H();
+		SPI_CS_DELAY();
+	}
+}
 
 void SpiWriteRom(uint16_t page, uint8_t addr, uint16_t len, uint16_t *buf)
 {
-    // Simulated EEPROM write
-    uint32_t offset = (page * 16) + addr; // Simplified mapping
-    if (offset + (len * 2) <= SIMULATED_EEPROM_SIZE) {
-        memcpy(&simulated_eeprom[offset], buf, len * 2);
-    }
+	uint8_t SpiCMD = 0x82; // PAGE_PROGRAM_DIRECT
+	uint8_t Add1 = 0;
+	uint8_t Add2 = 0;
+	uint8_t Add3 = 0;
+	uint16_t i = 0;
+
+	SpiBusyOK();
+
+	//rom address ..
+	//xxxx xxPP // PPPP PPPB // BBBB BBBB //
+
+	Add1 = (page & 0x1ff) >> 7;
+	Add2 = ((page & 0x7f) << 1)	| ((addr & 0x1ff) >> 8);	
+	Add3 = (addr & 0xff);
+	
+	SPI1_CS_H();
+	SPI_CS_DELAY();
+	SPI1_CS_L();
+	SPI_CS_DELAY();
+
+	SpiTx(SpiCMD);
+	SpiTx(Add1);
+	SpiTx(Add2);
+	SpiTx(Add3);
+
+	for(i = 0; i < len; i++)
+	{
+		SpiTx(buf[i] & 0xff);
+	}
+
+	SPI1_CS_H();
+	SPI_CS_DELAY();
 }
 
 void SpiReadRom(uint16_t page, uint8_t addr, uint16_t len, uint16_t *buf)
 {
-    // Simulated EEPROM read
-    uint32_t offset = (page * 16) + addr;
-    if (offset + (len * 2) <= SIMULATED_EEPROM_SIZE) {
-        memcpy(buf, &simulated_eeprom[offset], len * 2);
-    }
+	uint8_t SpiCMD = 0xd2; // PAGE_READ
+	uint8_t Add1 = 0;
+	uint8_t Add2 = 0;
+	uint8_t Add3 = 0;
+	uint16_t i = 0;
+
+	SpiBusyOK();
+
+	//rom address ..
+	//xxxx xxPP // PPPP PPPB // BBBB BBBB //
+
+	Add1 = (page & 0x1ff) >> 7;
+	Add2 = ((page & 0x7f) << 1)	| ((addr & 0x1ff) >> 8);	
+	Add3 = (addr & 0xff);
+
+	SPI1_CS_H();
+	SPI_CS_DELAY();
+	SPI1_CS_L();
+	SPI_CS_DELAY();
+
+	SpiTx(SpiCMD);
+	SpiTx(Add1);
+	SpiTx(Add2);
+	SpiTx(Add3);
+	//dont care byte
+	SpiTx(0);
+	SpiTx(0);
+	SpiTx(0);
+	SpiTx(0);
+
+	for(i = 0; i < len; i++)
+	{
+		buf[i] = SpiTx(0);
+	}
+
+	SPI1_CS_H();
+	SPI_CS_DELAY();
 }
 
 void maxmin_write_rom( void )
@@ -69,6 +170,7 @@ void read_vel_rom()
     SpiReadRom((uint16_t)(VELOCITY_PAGE), 0x00, 8, lead_vel);
     g_u32_VEL_targetval = ((lead_vel[i++] & 0xff) << 0);
     g_u32_VEL_targetval |= ((lead_vel[i++] & 0xff ) << 8);
+    g_q17user_vel = (float)g_u32_VEL_targetval / 128.0f;
 }
 
 void write_vel_rom()

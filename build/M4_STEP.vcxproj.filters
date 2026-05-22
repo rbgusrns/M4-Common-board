@@ -1,0 +1,156 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\gpio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\adc.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\dma.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\i2c.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\spi.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\tim.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\usart.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\stm32g4xx_it.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\stm32g4xx_hal_msp.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\sysmem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\syscalls.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\fastrun.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\menu.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\motor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\oled.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\rom.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\search.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\sensor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Core\Src\viper_global.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\STproject\M4_STEP\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\STproject\M4_STEP\startup_stm32g474xx.s" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\system_stm32g4xx.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_adc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_adc_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_ll_adc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_rcc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_rcc_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_flash.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_flash_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_flash_ramfunc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_gpio.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_exti.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_dma.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_dma_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_pwr.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_pwr_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_cortex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_i2c.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_i2c_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_spi.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_spi_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_tim.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_tim_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_uart.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="C:\STproject\M4_STEP\build\cmake\stm32cubemx\STM32_Drivers.dir\$(Configuration)\stm32g4xx_hal_uart_ex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{FC705255-5108-3F32-BED6-B065B2998844}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{6476BF40-B9F5-3C85-AA95-A2AF64E48329}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

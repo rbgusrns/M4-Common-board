@@ -113,6 +113,7 @@ int main(void)
       */
   }
   sen_vari_init();
+  Variable_Init();
   menu_start();
   /* USER CODE END 2 */
 

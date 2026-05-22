@@ -1,0 +1,10 @@
+^C:\STPROJECT\M4_STEP\BUILD\CMAKEFILES\300304C781C2D2381344AD655BD2E42A\GENERATE.STAMP.RULE
+setlocal
+C:\ST\STM32CubeCLT_1.21.0\CMake\bin\cmake.exe -SC:/STproject/M4_STEP -BC:/STproject/M4_STEP/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/STproject/M4_STEP/build/M4_STEP.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
