@@ -63,9 +63,40 @@
       "problemMatcher": []
     },
     {
+      "label": "flash: stlink",
+      "type": "process",
+      "command": "${env:STM32CubeCLT_ROOT}/STM32CubeProgrammer/bin/STM32_Programmer_CLI.exe",
+      "args": [
+        "-c",
+        "port=SWD",
+        "-d",
+        "${workspaceFolder}/build/Debug/M4_STEP.elf",
+        "-v",
+        "-rst"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "dependsOn": [
+        "cmake: build"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "cmake: build + flash",
       "dependsOn": [
         "flash: openocd"
+      ],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake: build + flash (ST-Link)",
+      "dependsOn": [
+        "flash: stlink"
       ],
       "dependsOrder": "sequence",
       "group": {

@@ -624,7 +624,7 @@ void start_end_check(void)
     }
     else 
     {
-        if( U16_turnmark_cnt < 140 ) return; 
+        if( U16_turnmark_cnt < 1 ) return; 
         
         g_Flag.move_state = OFF;
         
