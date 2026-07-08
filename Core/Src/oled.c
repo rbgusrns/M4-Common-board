@@ -7,7 +7,7 @@
 
 #define OLED_ADDR ((uint16_t)(0x3CU << 1))
 #define OLED_BUFFER_SIZE (OLED_WIDTH * OLED_PAGE_COUNT)
-#define OLED_DMA_TX_SIZE (OLED_WIDTH + 1U)
+#define OLED_TX_CHUNK_SIZE (OLED_WIDTH + 1U)
 #define OLED_TEXT_BUFFER_SIZE 32U
 
 const uint8_t font5x7[95][5] = {
@@ -330,7 +330,7 @@ static void OLED_DrawChar(uint8_t x, uint8_t page, char ch)
 
 static void OLED_UpdateBlocking(void)
 {
-    uint8_t data[OLED_DMA_TX_SIZE];
+    uint8_t data[OLED_TX_CHUNK_SIZE];
 
     memcpy(frame_buffer, draw_buffer, sizeof(frame_buffer));
 
@@ -342,7 +342,7 @@ static void OLED_UpdateBlocking(void)
 
         data[0] = 0x40U;
         memcpy(&data[1], &frame_buffer[(uint16_t)page * OLED_WIDTH], OLED_WIDTH);
-        (void)OLED_I2C_Write(data, OLED_DMA_TX_SIZE, 100000U);
+        (void)OLED_I2C_Write(data, OLED_TX_CHUNK_SIZE, 100000U);
     }
 }
 

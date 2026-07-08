@@ -9,9 +9,9 @@
 - 스캔 방식: 발광 LED 2개를 한 묶음으로 켜는 8스텝 순차 스캔
 - 주요 코드: `Core/Src/adc.c`, `Core/Src/tim.c`, `Core/Src/sensor.c`, `Core/Inc/sensor.h`
 
-현재 센서 ADC 경로는 **ADC DMA를 사용하지 않는다.** ADC1/ADC2를 TIM2 TRGO로 동시에 변환시키고, ADC2 변환 완료 콜백에서 ADC1/ADC2의 DR 값을 직접 읽는다.
+현재 센서 ADC 경로는 **ADC DMA를 사용하지 않는다.** ADC1/ADC2를 TIM2 TRGO로 동시에 변환시키고, ADC2 EOC 인터럽트에서 ADC1/ADC2의 DR 값을 LL API로 직접 읽는다.
 
-OLED 화면 전송은 별도 경로이며, I2C2 TX DMA를 사용한다.
+OLED 화면 전송은 별도 경로이며, I2C2를 LL blocking write 방식으로 사용한다.
 
 ## 2. 센서 매핑
 
@@ -61,10 +61,9 @@ TIM2 설정은 다음과 같다.
 
 ADC 설정은 다음과 같다.
 
-- ADC1/ADC2 모두 `ExternalTrigConv = ADC_EXTERNALTRIG_T2_TRGO`
-- ADC1/ADC2 모두 `DiscontinuousConvMode = ENABLE`
-- ADC1/ADC2 모두 `NbrOfDiscConversion = 1`
-- ADC1/ADC2 모두 `DMAContinuousRequests = DISABLE`
+- ADC1/ADC2 모두 `LL_ADC_REG_TRIG_EXT_TIM2_TRGO`
+- ADC1/ADC2 모두 `LL_ADC_REG_SEQ_DISCONT_1RANK`
+- ADC1/ADC2 모두 `LL_ADC_REG_DMA_TRANSFER_NONE`
 - ADC1/ADC2 global IRQ priority: `0`
 
 현재 코드의 실제 흐름은 다음과 같다.
@@ -73,17 +72,17 @@ ADC 설정은 다음과 같다.
 2. ADC1/ADC2 캘리브레이션을 수행한다.
 3. `g_scan_step`, `g_adc_step`을 0으로 초기화한다.
 4. `sensor_set_active_step(0)`으로 첫 LED 스텝을 켠다.
-5. ADC1은 `HAL_ADC_Start()`, ADC2는 `HAL_ADC_Start_IT()`로 시작한다.
+5. ADC1/ADC2 OVR 인터럽트와 ADC2 EOC 인터럽트를 켠 뒤 `LL_ADC_REG_StartConversion()`으로 두 ADC를 시작한다.
 6. TIM2 CH2 PWM을 시작해 TRGO를 발생시킨다.
-7. ADC2 변환 완료 콜백에서 ADC1/ADC2 DR 값을 읽어 `g_sen[]`에 저장한다.
+7. `ADC1_2_IRQHandler()`가 `sensor_adc_irq_handler()`를 호출하고, ADC2 EOC 시 ADC1/ADC2 DR 값을 읽어 `g_sen[]`에 저장한다.
 8. 현재 LED를 끄고, 정규화 값과 ON/OFF 상태를 즉시 갱신한다.
 9. 모터 타임베이스 처리를 수행한 뒤 다음 스텝 LED를 켠다.
 
-중요한 차이: 현재 `HAL_TIM_PeriodElapsedCallback()`은 TIM2에 대해 아무 작업도 하지 않는다. 문서나 이전 설계에서 말하던 "TIM2 Update IRQ에서 LED ON" 흐름은 현재 구현과 다르다.
+중요한 차이: 현재 `TIM2_IRQHandler()`는 `sensor_tim2_irq_handler()`를 호출해 UPDATE/CC2 플래그만 클리어한다. 문서나 이전 설계에서 말하던 "TIM2 Update IRQ에서 LED ON" 흐름은 현재 구현과 다르다.
 
 ## 4. 런타임 데이터 처리
 
-ADC2 완료 콜백에서 다음 값을 즉시 갱신한다.
+ADC2 EOC 인터럽트에서 다음 값을 즉시 갱신한다.
 
 - `g_sen[idx].iq17_4095_value`
 - `g_sen[idx].iq17_127_value`
@@ -96,25 +95,24 @@ ADC2 완료 콜백에서 다음 값을 즉시 갱신한다.
 
 ## 5. 에러 복구
 
-`HAL_ADC_ErrorCallback()`은 ADC 오버런이 감지되면 다음을 수행한다.
+`sensor_adc_irq_handler()`는 ADC1/ADC2 ISR의 OVR 비트를 직접 확인한다. 오버런이 감지되면 `sensor_adc_recover_from_error()`가 다음을 수행한다.
 
-1. ADC1/ADC2의 OVR 플래그를 클리어한다.
-2. ADC 상태를 `HAL_ADC_STATE_READY`로 되돌린다.
-3. `g_adc_step`을 0으로 초기화한다.
-4. ADC1/ADC2를 다시 시작한다.
+1. TIM2 트리거를 정지한다.
+2. ADC1/ADC2 변환과 ADC를 정지한다.
+3. ADC1/ADC2의 EOC/EOS/OVR 플래그를 클리어한다.
+4. `g_adc_step`, `g_scan_step`을 0으로 초기화하고 첫 LED 스텝을 켠다.
+5. ADC1/ADC2를 ready 상태로 다시 enable한다.
+6. ADC1/ADC2 변환과 TIM2 트리거를 다시 시작한다.
 
-주의: 에러 복구 루틴은 ADC만 재시작한다. TIM2를 완전히 정지/리셋한 뒤 다시 동기화하는 전체 재시작은 `sensor_scan_start()`에서 수행한다.
+주의: 전체 재캘리브레이션은 `sensor_scan_start()`에서 수행한다. 오버런 복구 루틴은 빠른 재동기화를 위해 ADC ready enable과 트리거 재시작까지만 수행한다.
 
-## 6. OLED와 DMA
+## 6. OLED와 I2C2
 
-센서 ADC 경로와 별개로 OLED 전송은 I2C2 TX DMA를 사용한다.
+센서 ADC 경로와 별개로 OLED 전송은 I2C2 LL blocking write를 사용한다.
 
-- I2C2 RX: `DMA1_Channel6`
-- I2C2 TX: `DMA1_Channel7`
-- DMA IRQ priority: `10`
-- 실제 호출: `HAL_I2C_Master_Transmit_DMA()`
+- 실제 호출: `OLED_I2C_Write()`
 
-현재 `OLED_EnterCritical()` / `OLED_ExitCritical()`은 실질적인 인터럽트 마스킹을 하지 않는다. 예전 문서에 있던 `BASEPRI` 기반 크리티컬 섹션은 현재 코드에 없다.
+현재 OLED 전송 루틴은 `LL_I2C_HandleTransfer()`, `LL_I2C_TransmitData8()`, I2C 플래그 polling으로 전송을 끝낸다. I2C2 DMA 채널은 CubeMX 설정에서도 제거되어 현재 코드에서는 DMA를 사용하지 않는다.
 
 ## 7. 현재 확인해야 할 항목
 

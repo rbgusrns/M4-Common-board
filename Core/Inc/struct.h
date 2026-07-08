@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    viper_struct.h
+  * @file    struct.h
   * @brief   Core data structures ported from _Viper_ (TMS320F2809)
   *
   * @note    Original: Struct.h by Choi gi baek (MAZE 16TH), 2012.01.18

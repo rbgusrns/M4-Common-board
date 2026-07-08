@@ -5,7 +5,7 @@
   *
   * @note    Ported from Rom.h/_Viper_ (TMS320F2809)
   *          Original used SPI Flash/EEPROM; this version keeps same interface
-  *          with STM32 SPI1 HAL
+  *          with STM32 SPI1 LL/register access
   ******************************************************************************
   */
 

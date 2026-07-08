@@ -19,9 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
-#include <stddef.h>
 
 /* USER CODE BEGIN 0 */
+#include <stddef.h>
 
 /* USER CODE END 0 */
 
@@ -139,6 +139,21 @@ void USART1_WriteString(const char *str)
   {
   }
 }
+
+int __io_putchar(int ch)
+{
+  // 시리얼 모니터에서 줄바꿈이 정상적으로 보이도록 \n을 \r\n으로 변환 처리
+  if (ch == '\n')
+  {
+    while (LL_USART_IsActiveFlag_TXE(USART1) == 0U) {}
+    LL_USART_TransmitData8(USART1, '\r');
+  }
+  // 1바이트 전송 대기 후 데이터 송신
+  while (LL_USART_IsActiveFlag_TXE(USART1) == 0U) {}
+  LL_USART_TransmitData8(USART1, (uint8_t)ch);
+  return ch;
+}
+
 
 /* USER CODE END 1 */
 

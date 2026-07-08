@@ -19,9 +19,7 @@ C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:145:6:SVC_Handler	4	static
 C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:158:6:DebugMon_Handler	4	static
 C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:171:6:PendSV_Handler	4	static
 C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:184:6:SysTick_Handler	4	static
-C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:205:6:DMA1_Channel6_IRQHandler	4	static
-C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:218:6:DMA1_Channel7_IRQHandler	4	static
-C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:231:6:ADC1_2_IRQHandler	8	static
-C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:244:6:TIM2_IRQHandler	8	static
-C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:256:6:I2C2_EV_IRQHandler	8	static
-C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:269:6:I2C2_ER_IRQHandler	8	static
+C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:205:6:ADC1_2_IRQHandler	8	static
+C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:218:6:TIM2_IRQHandler	8	static
+C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:230:6:I2C2_EV_IRQHandler	8	static
+C:/STproject/M4_STEP/Core/Src/stm32g4xx_it.c:243:6:I2C2_ER_IRQHandler	8	static
