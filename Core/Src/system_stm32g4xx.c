@@ -145,8 +145,8 @@
   */
   /* The SystemCoreClock variable is updated in three ways:
       1) by calling CMSIS function SystemCoreClockUpdate()
-      2) by calling HAL API function HAL_RCC_GetHCLKFreq()
-      3) each time HAL_RCC_ClockConfig() is called to configure the system clock frequency
+      2) by calling the clock helper used by the application
+      3) each time the system clock frequency is reconfigured
          Note: If you use this function to configure the system clock; then there
                is no need to call the 2 first functions listed above, since SystemCoreClock
                variable is updated automatically.
@@ -212,11 +212,11 @@ void SystemInit(void)
   *           - If SYSCLK source is PLL, SystemCoreClock will contain the HSE_VALUE(***)
   *             or HSI_VALUE(*) multiplied/divided by the PLL factors.
   *
-  *         (**) HSI_VALUE is a constant defined in stm32g4xx_hal.h file (default value
+  *         (**) HSI_VALUE is a constant defined by the build configuration (default value
   *              16 MHz) but the real value may vary depending on the variations
   *              in voltage and temperature.
   *
-  *         (***) HSE_VALUE is a constant defined in stm32g4xx_hal.h file (default value
+  *         (***) HSE_VALUE is a constant defined by the build configuration (default value
   *              24 MHz), user has to ensure that HSE_VALUE is same as the real
   *              frequency of the crystal used. Otherwise, this function may
   *              have wrong result.
@@ -283,5 +283,4 @@ void SystemCoreClockUpdate(void)
 /**
   * @}
   */
-
 

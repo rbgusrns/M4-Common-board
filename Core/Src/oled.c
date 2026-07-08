@@ -108,49 +108,113 @@ const uint8_t font5x7[95][5] = {
   {0x08,0x08,0x2A,0x1C,0x08}, // '~'
 };
 
-typedef enum
-{
-    OLED_DMA_IDLE = 0,
-    OLED_DMA_CMD,
-    OLED_DMA_DATA
-} oled_dma_stage_t;
-
 static uint8_t draw_buffer[OLED_BUFFER_SIZE];
 static uint8_t frame_buffer[OLED_BUFFER_SIZE];
-static uint8_t dma_tx_buffer[OLED_DMA_TX_SIZE];
-static volatile uint8_t oled_dma_busy;
-static volatile uint8_t oled_update_pending;
-static volatile uint8_t oled_dma_page;
-static volatile oled_dma_stage_t oled_dma_stage = OLED_DMA_IDLE;
 
-static uint32_t OLED_EnterCritical(void);
-static void OLED_ExitCritical(uint32_t primask);
+static void OLED_I2C_ClearErrorFlags(void);
+static uint8_t OLED_I2C_Write(const uint8_t *data, uint16_t len, uint32_t timeout);
 static void OLED_Cmd(uint8_t cmd);
 static void OLED_DrawChar(uint8_t x, uint8_t page, char ch);
-static void OLED_StartDmaFrame(void);
-static void OLED_StartPageCommand(uint8_t page);
-static void OLED_StartPageData(uint8_t page);
 static void OLED_UpdateBlocking(void);
 
-static uint32_t OLED_EnterCritical(void)
+static void OLED_I2C_ClearErrorFlags(void)
 {
-    return 0U;
+    if (LL_I2C_IsActiveFlag_ADDR(I2C2) != 0U) {
+        LL_I2C_ClearFlag_ADDR(I2C2);
+    }
+    if (LL_I2C_IsActiveFlag_NACK(I2C2) != 0U) {
+        LL_I2C_ClearFlag_NACK(I2C2);
+    }
+    if (LL_I2C_IsActiveFlag_STOP(I2C2) != 0U) {
+        LL_I2C_ClearFlag_STOP(I2C2);
+    }
+    if (LL_I2C_IsActiveFlag_BERR(I2C2) != 0U) {
+        LL_I2C_ClearFlag_BERR(I2C2);
+    }
+    if (LL_I2C_IsActiveFlag_ARLO(I2C2) != 0U) {
+        LL_I2C_ClearFlag_ARLO(I2C2);
+    }
+    if (LL_I2C_IsActiveFlag_OVR(I2C2) != 0U) {
+        LL_I2C_ClearFlag_OVR(I2C2);
+    }
 }
 
-static void OLED_ExitCritical(uint32_t primask)
+static uint8_t OLED_I2C_Write(const uint8_t *data, uint16_t len, uint32_t timeout)
 {
-    (void)primask;
+    uint32_t guard = timeout;
+
+    if ((data == NULL) || (len == 0U))
+    {
+        return 0U;
+    }
+
+    if (LL_I2C_IsEnabled(I2C2) == 0U)
+    {
+        LL_I2C_Enable(I2C2);
+    }
+
+    while (LL_I2C_IsActiveFlag_BUSY(I2C2) != 0U)
+    {
+        if (guard-- == 0U)
+        {
+            return 0U;
+        }
+    }
+
+    OLED_I2C_ClearErrorFlags();
+    LL_I2C_HandleTransfer(I2C2, OLED_ADDR, LL_I2C_ADDRSLAVE_7BIT, len,
+                          LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_WRITE);
+
+    for (uint16_t i = 0U; i < len; i++)
+    {
+        guard = timeout;
+        while (LL_I2C_IsActiveFlag_TXIS(I2C2) == 0U)
+        {
+            if ((LL_I2C_IsActiveFlag_NACK(I2C2) != 0U) ||
+                (LL_I2C_IsActiveFlag_BERR(I2C2) != 0U) ||
+                (LL_I2C_IsActiveFlag_ARLO(I2C2) != 0U) ||
+                (LL_I2C_IsActiveFlag_OVR(I2C2) != 0U))
+            {
+                LL_I2C_GenerateStopCondition(I2C2);
+                OLED_I2C_ClearErrorFlags();
+                return 0U;
+            }
+            if (guard-- == 0U)
+            {
+                LL_I2C_GenerateStopCondition(I2C2);
+                return 0U;
+            }
+        }
+        LL_I2C_TransmitData8(I2C2, data[i]);
+    }
+
+    guard = timeout;
+    while (LL_I2C_IsActiveFlag_STOP(I2C2) == 0U)
+    {
+        if (LL_I2C_IsActiveFlag_NACK(I2C2) != 0U)
+        {
+            OLED_I2C_ClearErrorFlags();
+            return 0U;
+        }
+        if (guard-- == 0U)
+        {
+            LL_I2C_GenerateStopCondition(I2C2);
+            return 0U;
+        }
+    }
+
+    LL_I2C_ClearFlag_STOP(I2C2);
+    return 1U;
 }
 
 static void OLED_Cmd(uint8_t cmd)
 {
     uint8_t data[2] = {0x00U, cmd};
-    (void)HAL_I2C_Master_Transmit(&hi2c2, OLED_ADDR, data, sizeof(data), 10U);
+    (void)OLED_I2C_Write(data, sizeof(data), 100000U);
 }
-
 void OLED_Init(void)
 {
-    HAL_Delay(100U);
+    LL_mDelay(100U);
 
     OLED_Cmd(0xAEU);
     OLED_Cmd(0x20U);
@@ -232,58 +296,7 @@ void OLED_Printf(uint8_t row, uint8_t col, const char *fmt, ...)
     OLED_Print(row, col, buf);
     OLED_Update();
 }
-
-void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c)
-{
-    if (hi2c->Instance != I2C2)
-    {
-        return;
-    }
-
-    if (oled_dma_stage == OLED_DMA_CMD)
-    {
-        OLED_StartPageData(oled_dma_page);
-        return;
-    }
-
-    if (oled_dma_stage == OLED_DMA_DATA)
-    {
-        uint32_t primask;
-
-        oled_dma_page++;
-
-        if (oled_dma_page < OLED_PAGE_COUNT)
-        {
-            OLED_StartPageCommand(oled_dma_page);
-            return;
-        }
-
-        oled_dma_stage = OLED_DMA_IDLE;
-        primask = OLED_EnterCritical();
-        oled_dma_busy = 0U;
-
-        if (oled_update_pending != 0U)
-        {
-            oled_update_pending = 0U;
-            OLED_ExitCritical(primask);
-            OLED_StartDmaFrame();
-            return;
-        }
-
-        OLED_ExitCritical(primask);
-    }
-}
-
-void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c)
-{
-    if (hi2c->Instance != I2C2)
-    {
-        return;
-    }
-
-    oled_dma_stage = OLED_DMA_IDLE;
-    oled_dma_busy = 0U;
-}
+
 
 static void OLED_DrawChar(uint8_t x, uint8_t page, char ch)
 {
@@ -315,48 +328,6 @@ static void OLED_DrawChar(uint8_t x, uint8_t page, char ch)
     }
 }
 
-static void OLED_StartDmaFrame(void)
-{
-    uint32_t primask = OLED_EnterCritical();
-
-    memcpy(frame_buffer, draw_buffer, sizeof(frame_buffer));
-    oled_update_pending = 0U;
-    oled_dma_busy = 1U;
-    oled_dma_page = 0U;
-    OLED_ExitCritical(primask);
-    OLED_StartPageCommand(0U);
-}
-
-static void OLED_StartPageCommand(uint8_t page)
-{
-    dma_tx_buffer[0] = 0x00U;
-    dma_tx_buffer[1] = (uint8_t)(0xB0U + page);
-    dma_tx_buffer[2] = 0x00U;
-    dma_tx_buffer[3] = 0x10U;
-    oled_dma_stage = OLED_DMA_CMD;
-
-    if (HAL_I2C_Master_Transmit_DMA(&hi2c2, OLED_ADDR, dma_tx_buffer, 4U) != HAL_OK)
-    {
-        oled_dma_stage = OLED_DMA_IDLE;
-        oled_dma_busy = 0U;
-        OLED_UpdateBlocking();
-    }
-}
-
-static void OLED_StartPageData(uint8_t page)
-{
-    dma_tx_buffer[0] = 0x40U;
-    memcpy(&dma_tx_buffer[1], &frame_buffer[(uint16_t)page * OLED_WIDTH], OLED_WIDTH);
-    oled_dma_stage = OLED_DMA_DATA;
-
-    if (HAL_I2C_Master_Transmit_DMA(&hi2c2, OLED_ADDR, dma_tx_buffer, OLED_DMA_TX_SIZE) != HAL_OK)
-    {
-        oled_dma_stage = OLED_DMA_IDLE;
-        oled_dma_busy = 0U;
-        OLED_UpdateBlocking();
-    }
-}
-
 static void OLED_UpdateBlocking(void)
 {
     uint8_t data[OLED_DMA_TX_SIZE];
@@ -371,7 +342,7 @@ static void OLED_UpdateBlocking(void)
 
         data[0] = 0x40U;
         memcpy(&data[1], &frame_buffer[(uint16_t)page * OLED_WIDTH], OLED_WIDTH);
-        (void)HAL_I2C_Master_Transmit(&hi2c2, OLED_ADDR, data, OLED_DMA_TX_SIZE, 100U);
+        (void)OLED_I2C_Write(data, OLED_DMA_TX_SIZE, 100000U);
     }
 }
 

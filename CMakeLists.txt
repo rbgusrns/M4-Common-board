@@ -55,7 +55,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/rom.c
     Core/Src/search.c
     Core/Src/sensor.c
-    Core/Src/viper_global.c
+    Core/Src/global.c
 )
 
 # Add include paths

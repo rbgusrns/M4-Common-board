@@ -1,0 +1,14 @@
+C:/STproject/M4_STEP/Core/Src/motor.c:7:6:F_ENDACCEL	8	static
+C:/STproject/M4_STEP/Core/Src/motor.c:33:6:F_ACCELERATION	8	static
+C:/STproject/M4_STEP/Core/Src/motor.c:74:6:F_HANDLE_ACC	8	static
+C:/STproject/M4_STEP/Core/Src/motor.c:97:6:F_HANDLE_DEC	8	static
+C:/STproject/M4_STEP/Core/Src/motor.c:121:6:F_TURNDIST	8	static
+C:/STproject/M4_STEP/Core/Src/motor.c:141:6:F_VELOCITY	8	static
+C:/STproject/M4_STEP/Core/Src/motor.c:164:6:motor_vari_init	8	static
+C:/STproject/M4_STEP/Core/Src/motor.c:170:6:Init_MotorCtrlVar	16	static
+C:/STproject/M4_STEP/Core/Src/motor.c:193:6:Motor_CalBaseMotionValue	24	static
+C:/STproject/M4_STEP/Core/Src/motor.c:232:6:R_Motor_ON	16	static
+C:/STproject/M4_STEP/Core/Src/motor.c:245:6:L_Motor_ON	16	static
+C:/STproject/M4_STEP/Core/Src/motor.c:258:6:decel_calculation	4	static
+C:/STproject/M4_STEP/Core/Src/motor.c:288:6:move_to_move	32	static,ignoring_inline_asm
+C:/STproject/M4_STEP/Core/Src/motor.c:310:6:move_to_end	24	static,ignoring_inline_asm

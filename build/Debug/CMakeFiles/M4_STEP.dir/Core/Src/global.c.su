@@ -1,0 +1,4 @@
+C:/STproject/M4_STEP/Core/Src/global.c:80:6:left_motor_step	24	static
+C:/STproject/M4_STEP/Core/Src/global.c:85:6:right_motor_step	24	static
+C:/STproject/M4_STEP/Core/Src/global.c:90:6:motor_stop_all	4	static
+C:/STproject/M4_STEP/Core/Src/global.c:95:6:Variable_Init	8	static

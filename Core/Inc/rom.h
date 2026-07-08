@@ -12,7 +12,7 @@
 #ifndef __ROM_H__
 #define __ROM_H__
 
-#include "viper_variable.h"
+#include "variable.h"
 
 /* ──────────── EEPROM page layout ──────────── */
 typedef enum

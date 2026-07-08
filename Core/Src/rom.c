@@ -13,18 +13,31 @@ static inline void SPI_CS_DELAY(void)
 
 static inline void SPI1_CS_H(void)
 {
-    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_SET);
+    SPI1_CS_GPIO_Port->BSRR = SPI1_CS_Pin;
 }
 
 static inline void SPI1_CS_L(void)
 {
-    HAL_GPIO_WritePin(SPI1_CS_GPIO_Port, SPI1_CS_Pin, GPIO_PIN_RESET);
+    SPI1_CS_GPIO_Port->BSRR = (uint32_t)SPI1_CS_Pin << 16U;
 }
 
 static uint8_t SpiTx(uint8_t tx_data)
 {
-    uint8_t rx_data = 0;
-    HAL_SPI_TransmitReceive(&hspi1, &tx_data, &rx_data, 1, 100);
+    if ((SPI1->CR1 & SPI_CR1_SPE) == 0U) {
+        LL_SPI_Enable(SPI1);
+    }
+
+    while (LL_SPI_IsActiveFlag_TXE(SPI1) == 0U) {
+    }
+    LL_SPI_TransmitData8(SPI1, tx_data);
+
+    while (LL_SPI_IsActiveFlag_RXNE(SPI1) == 0U) {
+    }
+
+    uint8_t rx_data = LL_SPI_ReceiveData8(SPI1);
+    while (LL_SPI_IsActiveFlag_BSY(SPI1) != 0U) {
+    }
+
     return rx_data;
 }
 

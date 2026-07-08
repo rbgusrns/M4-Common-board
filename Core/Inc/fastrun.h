@@ -10,7 +10,7 @@
 #ifndef __FASTRUN_H__
 #define __FASTRUN_H__
 
-#include "viper_variable.h"
+#include "variable.h"
 
 /* ──────────── Turn distance thresholds (mm) ──────────── */
 typedef enum

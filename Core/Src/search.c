@@ -3,6 +3,7 @@
 #include "sensor.h"
 #include "oled.h"
 #include "rom.h"
+#include <stddef.h>
 
 void Race_Init()
 {
@@ -67,7 +68,7 @@ void F_1st_run()
     d=0;
     // StartCpuTimer0();
     OLED_Printf(0U, 0U, "_ _GO_ _");
-    HAL_Delay(100);
+    LL_mDelay(100);
         
     search_race();
          
@@ -106,7 +107,7 @@ int race_stop_check( void )
             write_line_info_rom();
 
             OLED_Printf(0U, 0U, "__SAVE__");
-            HAL_Delay(1000);
+            LL_mDelay(1000);
             // float printing is not natively supported without changes in some stdlib setups, but we'll leave the format.
             OLED_Printf(0U, 0U, "T:%3.2f", g_fp32time);
         }
@@ -136,7 +137,7 @@ void search_race()
 {
     a=0;
     motor_vari_init();
-    HAL_Delay(500);
+    LL_mDelay(500);
     OLED_Printf(0U, 0U, "        ");
    
     g_Flag.first_race = ON;

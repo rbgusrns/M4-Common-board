@@ -32,8 +32,6 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern UART_HandleTypeDef huart1;
-
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -41,6 +39,8 @@ extern UART_HandleTypeDef huart1;
 void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void USART1_Write(const uint8_t *data, uint16_t len);
+void USART1_WriteString(const char *str);
 
 /* USER CODE END Prototypes */
 

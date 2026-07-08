@@ -11,17 +11,17 @@ void F_ENDACCEL()
         OLED_Printf(0U, 0U, "EDA:%lu", g_u32_END_ACC_targetval);
         if (!SW_R)
         {
-            HAL_Delay(135);
+            LL_mDelay(135);
             g_u32_END_ACC_targetval += 500;
         }
         else if (!SW_L)
         {
-            HAL_Delay(135);
+            LL_mDelay(135);
             g_u32_END_ACC_targetval -= 500;
         }
         else if (!SW_U)
         {
-            HAL_Delay(135);
+            LL_mDelay(135);
             g_u32_END_ACC_targetval = 8000;
         }
     }
@@ -38,29 +38,29 @@ void F_ACCELERATION()
         OLED_Printf(0U, 0U, "ACC=%lu", g_u32_ACC_targetval);
         if (!SW_R) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_u32_ACC_targetval += 100;
         }
         else if (!SW_L) 
         {    
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_u32_ACC_targetval -= 100;
         }
     }
     
-    HAL_Delay(150);
+    LL_mDelay(150);
 
     while(SW_D)
     {
         OLED_Printf(0U, 0U, "ACC=%lu", g_int32long_ACC);
         if (!SW_R) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_int32long_ACC += 100;
         }
         else if (!SW_L) 
         {    
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_int32long_ACC -= 100;
         }
     }
@@ -68,7 +68,7 @@ void F_ACCELERATION()
     write_acc_rom();
     a = 2;
     b = 0;
-    HAL_Delay(100);
+    LL_mDelay(100);
 }
 
 void F_HANDLE_ACC()
@@ -78,12 +78,12 @@ void F_HANDLE_ACC()
         OLED_Printf(0U, 0U, "HDA=%4u", g_i16_handle_acc);
         if (SW_R == 0) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_i16_handle_acc += 10;
         }
         else if (SW_L == 0) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_i16_handle_acc -= 10;
         }
     }
@@ -91,7 +91,7 @@ void F_HANDLE_ACC()
     a = 3;
     b = 0;
     c = 0;
-    HAL_Delay(100);
+    LL_mDelay(100);
 }
 
 void F_HANDLE_DEC()
@@ -101,12 +101,12 @@ void F_HANDLE_DEC()
         OLED_Printf(0U, 0U, "HDD=%4u", g_i16_handle_dec);
         if (SW_R == 0) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_i16_handle_dec += 10;
         }
         else if (SW_L == 0) 
         {    
-            HAL_Delay(125);
+            LL_mDelay(125);
             D_HANDLE -= 10;
             g_i16_handle_dec -= 10;
         }
@@ -115,7 +115,7 @@ void F_HANDLE_DEC()
     a = 4;
     b = 0;
     c = 0;
-    HAL_Delay(100);
+    LL_mDelay(100);
 }
 
 void F_TURNDIST()
@@ -125,12 +125,12 @@ void F_TURNDIST()
         OLED_Printf(0U, 0U, "DIST=%u", g_u16turn_dist);
         if (!SW_R) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_u16turn_dist += 1;
         }
         else if (!SW_L) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_u16turn_dist -= 1;
         }
     }
@@ -146,12 +146,12 @@ void F_VELOCITY()
         OLED_Printf(0U, 0U, "VEL=%lu", g_u32_VEL_targetval);
         if (!SW_R) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_u32_VEL_targetval += 50;
         }
         else if (!SW_L) 
         {
-            HAL_Delay(125);
+            LL_mDelay(125);
             g_u32_VEL_targetval -= 50;
         }
     }

@@ -10,7 +10,7 @@
 #ifndef __SEARCH_H__
 #define __SEARCH_H__
 
-#include "viper_variable.h"
+#include "variable.h"
 
 void Race_Init(void);
 void search_race(void);

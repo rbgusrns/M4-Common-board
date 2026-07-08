@@ -11,7 +11,7 @@
 #ifndef __MOTOR_H__
 #define __MOTOR_H__
 
-#include "viper_variable.h"
+#include "variable.h"
 
 /* ──────────── Motor menu functions ──────────── */
 void F_VELOCITY(void);

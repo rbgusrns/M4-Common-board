@@ -1,3 +1,12 @@
-C:/STproject/M4_STEP/Core/Src/tim.c:30:6:MX_TIM2_Init	64	static
-C:/STproject/M4_STEP/Core/Src/tim.c:83:6:HAL_TIM_Base_MspInit	24	static
-C:/STproject/M4_STEP/Core/Src/tim.c:103:6:HAL_TIM_Base_MspDeInit	16	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/CMSIS/Include/core_cm4.h:1667:26:__NVIC_GetPriorityGrouping	4	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/CMSIS/Include/core_cm4.h:1679:22:__NVIC_EnableIRQ	16	static,ignoring_inline_asm
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/CMSIS/Include/core_cm4.h:1809:22:__NVIC_SetPriority	16	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/CMSIS/Include/core_cm4.h:1856:26:NVIC_EncodePriority	40	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_bus.h:913:22:LL_APB1_GRP1_EnableClock	24	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:2214:22:LL_TIM_DisableARRPreload	16	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:2993:22:LL_TIM_OC_DisableFast	24	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:3045:22:LL_TIM_OC_EnablePreload	24	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:3954:22:LL_TIM_SetClockSource	16	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:4007:22:LL_TIM_SetTriggerOutput	16	static
+C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_tim.h:4113:22:LL_TIM_DisableMasterSlaveMode	16	static
+C:/STproject/M4_STEP/Core/Src/tim.c:28:6:MX_TIM2_Init	64	static

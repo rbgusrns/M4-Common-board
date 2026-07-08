@@ -1,4 +1,4 @@
-#include "viper_variable.h"
+#include "variable.h"
 
 // Structures
 sen_t            g_sen[16];

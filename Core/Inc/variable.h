@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    viper_variable.h
+  * @file    variable.h
   * @brief   Global variables and GPIO macros for M4_STEP (STM32G474)
   *
   * @note    Ported from Variable.h (_Viper_ / TMS320F2809)
@@ -8,11 +8,11 @@
   ******************************************************************************
   */
 
-#ifndef __VIPER_VARIABLE_H__
-#define __VIPER_VARIABLE_H__
+#ifndef __VARIABLE_H__
+#define __VARIABLE_H__
 
 #include "main.h"
-#include "viper_struct.h"
+#include "struct.h"
 #include <stdint.h>
 
 
@@ -30,32 +30,26 @@ typedef double  float64;
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Extern peripheral handles (defined in main.c by CubeMX)
  * ═══════════════════════════════════════════════════════════════════════════ */
-extern ADC_HandleTypeDef hadc1, hadc2, hadc3, hadc4, hadc5;
-extern DMA_HandleTypeDef hdma_adc1, hdma_adc2, hdma_adc3, hdma_adc4, hdma_adc5;
-extern TIM_HandleTypeDef htim2;
-extern SPI_HandleTypeDef hspi1;
-extern UART_HandleTypeDef huart1;
-extern I2C_HandleTypeDef hi2c2;
 
 /* ═══════════════════════════════════════════════════════════════════════════
  *  LED indicator macros (STM32 GPIO)
  * ═══════════════════════════════════════════════════════════════════════════ */
 /* TODO: Assign actual LED GPIO pins when hardware is confirmed */
-#define L_LED_ON    /* HAL_GPIO_WritePin(L_LED_GPIO_Port, L_LED_Pin, GPIO_PIN_SET)   */
-#define L_LED_OFF   /* HAL_GPIO_WritePin(L_LED_GPIO_Port, L_LED_Pin, GPIO_PIN_RESET) */
-#define R_LED_ON    /* HAL_GPIO_WritePin(R_LED_GPIO_Port, R_LED_Pin, GPIO_PIN_SET)   */
-#define R_LED_OFF   /* HAL_GPIO_WritePin(R_LED_GPIO_Port, R_LED_Pin, GPIO_PIN_RESET) */
-#define BLUE_ON     /* HAL_GPIO_WritePin(BLUE_GPIO_Port, BLUE_Pin, GPIO_PIN_SET)     */
-#define BLUE_OFF    /* HAL_GPIO_WritePin(BLUE_GPIO_Port, BLUE_Pin, GPIO_PIN_RESET)   */
+#define L_LED_ON
+#define L_LED_OFF
+#define R_LED_ON
+#define R_LED_OFF
+#define BLUE_ON
+#define BLUE_OFF
 
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Switch input macros (active-low)
  *  CubeMX labels: SW_U, SW_D, SW_L, SW_R
  * ═══════════════════════════════════════════════════════════════════════════ */
-#define SW_U  HAL_GPIO_ReadPin(SW_U_GPIO_Port, SW_U_Pin)
-#define SW_D  HAL_GPIO_ReadPin(SW_D_GPIO_Port, SW_D_Pin)
-#define SW_L  HAL_GPIO_ReadPin(SW_L_GPIO_Port, SW_L_Pin)
-#define SW_R  HAL_GPIO_ReadPin(SW_R_GPIO_Port, SW_R_Pin)
+#define SW_U  (((SW_U_GPIO_Port->IDR & SW_U_Pin) != 0U) ? 1U : 0U)
+#define SW_D  (((SW_D_GPIO_Port->IDR & SW_D_Pin) != 0U) ? 1U : 0U)
+#define SW_L  (((SW_L_GPIO_Port->IDR & SW_L_Pin) != 0U) ? 1U : 0U)
+#define SW_R  (((SW_R_GPIO_Port->IDR & SW_R_Pin) != 0U) ? 1U : 0U)
 
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Sensor LED control (L0~L7 — each drives 2 emitter LEDs)
@@ -239,4 +233,4 @@ void right_motor_step(uint32_t index);
 void motor_stop_all(void);
 void Variable_Init(void);
 
-#endif /* __VIPER_VARIABLE_H__ */
+#endif /* __VARIABLE_H__ */

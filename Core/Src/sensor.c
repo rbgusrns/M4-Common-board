@@ -12,14 +12,14 @@ volatile uint8_t g_scan_step = 0;
 volatile uint8_t g_adc_step = 0;
 
 const scan_step_t scan_table[SEN_NUM] = {
-    { { L0_GPIO_Port, L0_Pin }, &hadc1, &hadc2, 0, 0,  8 },
-    { { L1_GPIO_Port, L1_Pin }, &hadc1, &hadc2, 1, 1,  9 },
-    { { L2_GPIO_Port, L2_Pin }, &hadc1, &hadc2, 2, 2, 10 },
-    { { L3_GPIO_Port, L3_Pin }, &hadc1, &hadc2, 3, 3, 11 },
-    { { L4_GPIO_Port, L4_Pin }, &hadc1, &hadc2, 4, 4, 12 },
-    { { L5_GPIO_Port, L5_Pin }, &hadc1, &hadc2, 5, 5, 13 },
-    { { L6_GPIO_Port, L6_Pin }, &hadc1, &hadc2, 6, 6, 14 },
-    { { L7_GPIO_Port, L7_Pin }, &hadc1, &hadc2, 7, 7, 15 },
+    { { L0_GPIO_Port, L0_Pin }, 0, 8 },
+    { { L1_GPIO_Port, L1_Pin }, 1, 9 },
+    { { L2_GPIO_Port, L2_Pin }, 2, 10 },
+    { { L3_GPIO_Port, L3_Pin }, 3, 11 },
+    { { L4_GPIO_Port, L4_Pin }, 4, 12 },
+    { { L5_GPIO_Port, L5_Pin }, 5, 13 },
+    { { L6_GPIO_Port, L6_Pin }, 6, 14 },
+    { { L7_GPIO_Port, L7_Pin }, 7, 15 },
 };
 
 static void sensor_emitters_off(void);
@@ -57,196 +57,253 @@ static void sensor_set_active_step(uint8_t step)
     sensor_led_on(&p_step->led);
 }
 
+static void sensor_adc_stop(ADC_TypeDef *adc)
+{
+    if (LL_ADC_REG_IsConversionOngoing(adc) != 0U) {
+        LL_ADC_REG_StopConversion(adc);
+        while (LL_ADC_REG_IsConversionOngoing(adc) != 0U) {
+        }
+    }
+
+    if (LL_ADC_IsEnabled(adc) != 0U) {
+        LL_ADC_Disable(adc);
+        while (LL_ADC_IsDisableOngoing(adc) != 0U) {
+        }
+    }
+}
+
+static void sensor_adc_enable_ready(ADC_TypeDef *adc)
+{
+    LL_ADC_ClearFlag_ADRDY(adc);
+    LL_ADC_Enable(adc);
+    while (LL_ADC_IsActiveFlag_ADRDY(adc) == 0U) {
+    }
+    LL_ADC_ClearFlag_ADRDY(adc);
+}
+
+static void sensor_adc_calibrate_enable(ADC_TypeDef *adc)
+{
+    volatile uint32_t wait_loop_index;
+
+    sensor_adc_stop(adc);
+    LL_ADC_StartCalibration(adc, LL_ADC_SINGLE_ENDED);
+    while (LL_ADC_IsCalibrationOnGoing(adc) != 0U) {
+    }
+
+    wait_loop_index = (LL_ADC_DELAY_CALIB_ENABLE_ADC_CYCLES * 32U);
+    while (wait_loop_index != 0U) {
+        wait_loop_index--;
+    }
+
+    sensor_adc_enable_ready(adc);
+}
+
+static void sensor_adc_clear_flags(void)
+{
+    LL_ADC_ClearFlag_EOC(ADC1);
+    LL_ADC_ClearFlag_EOS(ADC1);
+    LL_ADC_ClearFlag_OVR(ADC1);
+    LL_ADC_ClearFlag_EOC(ADC2);
+    LL_ADC_ClearFlag_EOS(ADC2);
+    LL_ADC_ClearFlag_OVR(ADC2);
+}
+
+static void sensor_adc_start_pair(void)
+{
+    LL_ADC_EnableIT_OVR(ADC1);
+    LL_ADC_EnableIT_OVR(ADC2);
+    LL_ADC_EnableIT_EOC(ADC2);
+    LL_ADC_REG_StartConversion(ADC1);
+    LL_ADC_REG_StartConversion(ADC2);
+}
+
+static void sensor_tim2_start_trigger(void)
+{
+    LL_TIM_ClearFlag_UPDATE(TIM2);
+    LL_TIM_ClearFlag_CC2(TIM2);
+    LL_TIM_SetCounter(TIM2, 0U);
+    LL_TIM_GenerateEvent_UPDATE(TIM2);
+    LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
+    LL_TIM_EnableCounter(TIM2);
+}
+
+static void sensor_tim2_stop_trigger(void)
+{
+    LL_TIM_DisableCounter(TIM2);
+    LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
+    LL_TIM_SetCounter(TIM2, 0U);
+    LL_TIM_ClearFlag_UPDATE(TIM2);
+    LL_TIM_ClearFlag_CC2(TIM2);
+}
+
 void sensor_scan_start(void)
 {
-    // 1. TIM2를 완전히 정지하고 카운터를 리셋하여 불시의 트리거를 방지
-    HAL_TIM_Base_Stop_IT(&htim2);
-    HAL_TIM_PWM_Stop(&htim2, TIM_CHANNEL_2);
-    __HAL_TIM_SET_COUNTER(&htim2, 0);
+    sensor_tim2_stop_trigger();
+    sensor_adc_stop(ADC1);
+    sensor_adc_stop(ADC2);
+    sensor_adc_clear_flags();
 
-    // 2. ADC를 중지하여 내부 하드웨어 시퀀서를 Rank 1로 강제 리셋
-    HAL_ADC_Stop(&hadc1);
-    HAL_ADC_Stop_IT(&hadc2);
-
-    // 잔여 플래그 및 오버런 플래그 완벽하게 클리어
-    __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_EOC | ADC_FLAG_EOS | ADC_FLAG_OVR);
-    __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_EOC | ADC_FLAG_EOS | ADC_FLAG_OVR);
-
-    // 3. 아날로그 고정밀 측정을 위한 하드웨어 캘리브레이션 수행
-    HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
-    HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED);
+    sensor_adc_calibrate_enable(ADC1);
+    sensor_adc_calibrate_enable(ADC2);
 
     g_scan_step = 0;
     g_adc_step = 0;
+    sensor_set_active_step(0);
 
-    sensor_set_active_step(0); // LED 0 ON
-
-    // 4. 타이머가 꺼진 안전한 상태에서 ADC들을 기동하여 대기시킴
-    hadc1.State = HAL_ADC_STATE_READY;
-    hadc2.State = HAL_ADC_STATE_READY;
-    if (HAL_ADC_Start(&hadc1) != HAL_OK) Error_Handler();
-    if (HAL_ADC_Start_IT(&hadc2) != HAL_OK) Error_Handler();
-
-    // 5. 모든 준비가 끝난 후 TIM2를 켜서 완벽하게 정박자로 첫 트리거 공급
-    if (HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2) != HAL_OK) {
-        Error_Handler();
-    }
+    sensor_adc_clear_flags();
+    sensor_adc_start_pair();
+    sensor_tim2_start_trigger();
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+static void sensor_adc_recover_from_error(void)
 {
-    if (htim->Instance == TIM2) {
+    sensor_tim2_stop_trigger();
+    sensor_adc_stop(ADC1);
+    sensor_adc_stop(ADC2);
+    sensor_adc_clear_flags();
+
+    g_adc_step = 0;
+    g_scan_step = 0;
+    sensor_set_active_step(0);
+
+    sensor_adc_enable_ready(ADC1);
+    sensor_adc_enable_ready(ADC2);
+    sensor_adc_start_pair();
+    sensor_tim2_start_trigger();
+}
+
+static void sensor_process_adc_step(uint32_t val_hi, uint32_t val_lo)
+{
+    uint8_t step = g_adc_step;
+    const scan_step_t *p_step = &scan_table[step];
+    uint8_t hi_idx = p_step->sen_hi_idx;
+    uint8_t lo_idx = p_step->sen_lo_idx;
+
+    g_sen[hi_idx].iq17_4095_value = (float)val_hi;
+    g_sen[lo_idx].iq17_4095_value = (float)val_lo;
+
+    sensor_led_off(&p_step->led);
+
+    {
+        float val = g_sen[hi_idx].iq17_4095_value;
+        float max_val = g_sen[hi_idx].iq17_4095_max_value;
+        float min_val = g_sen[hi_idx].iq17_4095_min_value;
+
+        if (val > max_val) {
+            g_sen[hi_idx].iq17_127_value = 127.0f;
+        } else if (val < min_val) {
+            g_sen[hi_idx].iq17_127_value = 0.0f;
+        } else {
+            float denom = max_val - min_val;
+            if (denom <= 0.0f) denom = 1.0f;
+            g_sen[hi_idx].iq17_127_value = ((val - min_val) * 127.0f) / denom;
+        }
+
+        if (g_sen[hi_idx].iq17_127_value < 35.0f) {
+            g_sen[hi_idx].iq17_ON_OFF_value = 0.0f;
+        } else {
+            g_sen[hi_idx].iq17_ON_OFF_value = 1.0f;
+        }
+
+        if (g_sen[hi_idx].iq17_127_value > 60.0f) {
+            g_pos.u16state |= g_sen[hi_idx].u16active_arr;
+            g_Flag.lineout_flag = OFF;
+        } else {
+            g_pos.u16state &= g_sen[hi_idx].u16passive_arr;
+        }
+    }
+
+    {
+        float val = g_sen[lo_idx].iq17_4095_value;
+        float max_val = g_sen[lo_idx].iq17_4095_max_value;
+        float min_val = g_sen[lo_idx].iq17_4095_min_value;
+
+        if (val > max_val) {
+            g_sen[lo_idx].iq17_127_value = 127.0f;
+        } else if (val < min_val) {
+            g_sen[lo_idx].iq17_127_value = 0.0f;
+        } else {
+            float denom = max_val - min_val;
+            if (denom <= 0.0f) denom = 1.0f;
+            g_sen[lo_idx].iq17_127_value = ((val - min_val) * 127.0f) / denom;
+        }
+
+        if (g_sen[lo_idx].iq17_127_value < 35.0f) {
+            g_sen[lo_idx].iq17_ON_OFF_value = 0.0f;
+        } else {
+            g_sen[lo_idx].iq17_ON_OFF_value = 1.0f;
+        }
+
+        if (g_sen[lo_idx].iq17_127_value > 60.0f) {
+            g_pos.u16state |= g_sen[lo_idx].u16active_arr;
+            g_Flag.lineout_flag = OFF;
+        } else {
+            g_pos.u16state &= g_sen[lo_idx].u16passive_arr;
+        }
+    }
+
+    g_int32_isr_cnt++;
+
+    if (g_Flag.motor) {
+        g_i32_Time_index++;
+
+        if (++LMotor.u32_Period_Cnt >= LMotor.u32_Period) {
+            Motor_CalBaseMotionValue(&LMotor);
+            g_u32_L_index++;
+            left_motor_step(g_u32_L_index);
+            L_Motor_ON(&LMotor);
+        }
+
+        if (++RMotor.u32_Period_Cnt >= RMotor.u32_Period) {
+            Motor_CalBaseMotionValue(&RMotor);
+            g_u32_R_index++;
+            right_motor_step(g_u32_R_index);
+            R_Motor_ON(&RMotor);
+        }
+    } else {
+        motor_stop_all();
+    }
+
+    g_adc_step++;
+    if (g_adc_step >= SEN_NUM) {
+        g_adc_step = 0;
+    }
+    g_scan_step = g_adc_step;
+    sensor_led_on(&scan_table[g_scan_step].led);
+}
+
+void sensor_adc_irq_handler(void)
+{
+    uint32_t adc1_isr = ADC1->ISR;
+    uint32_t adc2_isr = ADC2->ISR;
+
+    if (((adc1_isr | adc2_isr) & ADC_ISR_OVR) != 0U) {
+        sensor_adc_recover_from_error();
         return;
     }
-}
 
-void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
-{
-    (void)htim;
-}
+    if ((adc2_isr & ADC_ISR_EOC) != 0U) {
+        uint32_t val_hi = LL_ADC_REG_ReadConversionData12(ADC1);
+        uint32_t val_lo = LL_ADC_REG_ReadConversionData12(ADC2);
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
-{
-    if (hadc == &hadc2) {
-        uint8_t step = g_adc_step;
-        const scan_step_t *p_step = &scan_table[step];
+        LL_ADC_ClearFlag_EOC(ADC1);
+        LL_ADC_ClearFlag_EOS(ADC1);
+        LL_ADC_ClearFlag_EOC(ADC2);
+        LL_ADC_ClearFlag_EOS(ADC2);
 
-        uint32_t val_hi = hadc1.Instance->DR;
-        uint32_t val_lo = hadc2.Instance->DR;
-
-        // Auto-clear overrun flags if they occurred to prevent ADC lockup
-        uint32_t isr1 = hadc1.Instance->ISR;
-        uint32_t isr2 = hadc2.Instance->ISR;
-        if (isr1 & ADC_FLAG_OVR) {
-            __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
-        }
-        if (isr2 & ADC_FLAG_OVR) {
-            __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
-        }
-
-        uint8_t hi_idx = p_step->sen_hi_idx;
-        uint8_t lo_idx = p_step->sen_lo_idx;
-
-        g_sen[hi_idx].iq17_4095_value = (float)val_hi;
-        g_sen[lo_idx].iq17_4095_value = (float)val_lo;
-
-        sensor_led_off(&p_step->led);
-
-        // Immediate normalization and state update for hi sensor inside the ISR (aligned to Viper)
-        {
-            float val = g_sen[hi_idx].iq17_4095_value;
-            float max_val = g_sen[hi_idx].iq17_4095_max_value;
-            float min_val = g_sen[hi_idx].iq17_4095_min_value;
-
-            if (val > max_val) {
-                g_sen[hi_idx].iq17_127_value = 127.0f;
-            } else if (val < min_val) {
-                g_sen[hi_idx].iq17_127_value = 0.0f;
-            } else {
-                float denom = max_val - min_val;
-                if (denom <= 0.0f) denom = 1.0f;
-                g_sen[hi_idx].iq17_127_value = ((val - min_val) * 127.0f) / denom;
-            }
-
-            if (g_sen[hi_idx].iq17_127_value < 35.0f) {
-                g_sen[hi_idx].iq17_ON_OFF_value = 0.0f;
-            } else {
-                g_sen[hi_idx].iq17_ON_OFF_value = 1.0f;
-            }
-
-            if (g_sen[hi_idx].iq17_127_value > 60.0f) {
-                g_pos.u16state |= g_sen[hi_idx].u16active_arr;
-                g_Flag.lineout_flag = OFF;
-            } else {
-                g_pos.u16state &= g_sen[hi_idx].u16passive_arr;
-            }
-        }
-
-        // Immediate normalization and state update for lo sensor inside the ISR (aligned to Viper)
-        {
-            float val = g_sen[lo_idx].iq17_4095_value;
-            float max_val = g_sen[lo_idx].iq17_4095_max_value;
-            float min_val = g_sen[lo_idx].iq17_4095_min_value;
-
-            if (val > max_val) {
-                g_sen[lo_idx].iq17_127_value = 127.0f;
-            } else if (val < min_val) {
-                g_sen[lo_idx].iq17_127_value = 0.0f;
-            } else {
-                float denom = max_val - min_val;
-                if (denom <= 0.0f) denom = 1.0f;
-                g_sen[lo_idx].iq17_127_value = ((val - min_val) * 127.0f) / denom;
-            }
-
-            if (g_sen[lo_idx].iq17_127_value < 35.0f) {
-                g_sen[lo_idx].iq17_ON_OFF_value = 0.0f;
-            } else {
-                g_sen[lo_idx].iq17_ON_OFF_value = 1.0f;
-            }
-
-            if (g_sen[lo_idx].iq17_127_value > 60.0f) {
-                g_pos.u16state |= g_sen[lo_idx].u16active_arr;
-                g_Flag.lineout_flag = OFF;
-            } else {
-                g_pos.u16state &= g_sen[lo_idx].u16passive_arr;
-            }
-        }
-
-        // 2. 틱 플래그 및 주행 타임 카운터 매 인터럽트마다 누적 (C2000과 정합성 확보)
-        g_int32_isr_cnt++;
-
-        if (g_Flag.motor) {
-            g_i32_Time_index++;
-
-            // 왼쪽 모터 가속도 및 분주 제어
-            if (++LMotor.u32_Period_Cnt >= LMotor.u32_Period) {
-                Motor_CalBaseMotionValue(&LMotor);
-                g_u32_L_index++;
-                left_motor_step(g_u32_L_index);
-                L_Motor_ON(&LMotor);
-            }
-
-            // 오른쪽 모터 가속도 및 분주 제어
-            if (++RMotor.u32_Period_Cnt >= RMotor.u32_Period) {
-                Motor_CalBaseMotionValue(&RMotor);
-                g_u32_R_index++;
-                right_motor_step(g_u32_R_index);
-                R_Motor_ON(&RMotor);
-            }
-        } else {
-            motor_stop_all();
-        }
-
-        g_adc_step++;
-        if (g_adc_step >= SEN_NUM) {
-            g_adc_step = 0;
-        }
-        g_scan_step = g_adc_step;
-        sensor_led_on(&scan_table[g_scan_step].led);
+        sensor_process_adc_step(val_hi, val_lo);
     }
 }
 
-void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
+void sensor_tim2_irq_handler(void)
 {
-    if (hadc == &hadc1 || hadc == &hadc2) {
-        if (hadc->ErrorCode & HAL_ADC_ERROR_OVR) {
-            // Clear overrun flag for both ADCs to reset their error states
-            __HAL_ADC_CLEAR_FLAG(&hadc1, ADC_FLAG_OVR);
-            __HAL_ADC_CLEAR_FLAG(&hadc2, ADC_FLAG_OVR);
-            
-            hadc1.State = HAL_ADC_STATE_READY;
-            hadc2.State = HAL_ADC_STATE_READY;
-            
-            // Reset scan steps to ensure left/right sensor index synchronization
-            g_adc_step = 0;
-            
-            // Restart both ADCs synchronously
-            (void)HAL_ADC_Start(&hadc1);
-            (void)HAL_ADC_Start_IT(&hadc2);
-        }
+    if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != 0U) {
+        LL_TIM_ClearFlag_UPDATE(TIM2);
+    }
+    if (LL_TIM_IsActiveFlag_CC2(TIM2) != 0U) {
+        LL_TIM_ClearFlag_CC2(TIM2);
     }
 }
-
 void sen_vari_init(void)
 {
     int16_t sen_value_setting= 0;
@@ -677,7 +734,7 @@ void F_4095()
         {
             page_idx = !page_idx;
             OLED_Clear();
-            HAL_Delay(200);
+            LL_mDelay(200);
         }
 
         char buf_left[16];
@@ -705,7 +762,7 @@ void F_4095()
         }
 
         OLED_Update();
-        HAL_Delay(20);
+        LL_mDelay(20);
     } while(SW_D); 
 
     a = 2;
@@ -716,7 +773,7 @@ void F_Max_min()
     int16_t sen_value_setting = 0;
     
     OLED_Printf(0U, 0U, "LOADING_");
-    HAL_Delay(500);
+    LL_mDelay(500);
 
     for( sen_value_setting = 0 ; sen_value_setting < ADC_NUM ; sen_value_setting++ )
     {
@@ -744,7 +801,7 @@ void F_Max_min()
         }
     }
     maxmin_write_rom();
-    HAL_Delay(125);
+    LL_mDelay(125);
 }
 
 void F_127()
@@ -760,7 +817,7 @@ void F_127()
         }
 
         OLED_DrawSensorBars(sensor_vals);
-        HAL_Delay(10);
+        LL_mDelay(10);
     } while(SW_D); 
 
     a = 3;
@@ -769,7 +826,7 @@ void F_127()
 void F_POSCHECK()
 {
     OLED_Printf(0U, 0U, "POSCHECK");
-    HAL_Delay(500);
+    LL_mDelay(500);
     g_u16pos_cnt=6;
 
     while(SW_D) 
@@ -815,12 +872,12 @@ void F_TURNMARK()
     cnt=0;
     OLED_Printf(0U, 0U, "MARK:%ld",g_int32total_cnt);
 
-    HAL_Delay(1000);
+    LL_mDelay(1000);
     OLED_Printf(0U, 0U, "        ");
     
     while(SW_D)    
     {
-        HAL_Delay(135);
+        LL_mDelay(135);
         
         if(!SW_R) cnt++;
         else if(!SW_L) cnt--;

@@ -22,6 +22,7 @@
 #include "stm32g4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "sensor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,13 +56,8 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern ADC_HandleTypeDef hadc1;
-extern ADC_HandleTypeDef hadc2;
-extern DMA_HandleTypeDef hdma_i2c2_rx;
-extern DMA_HandleTypeDef hdma_i2c2_tx;
-extern TIM_HandleTypeDef htim2;
+
 /* USER CODE BEGIN EV */
-extern I2C_HandleTypeDef hi2c2;
 
 /* USER CODE END EV */
 
@@ -190,7 +186,7 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
   /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
+
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */
@@ -211,7 +207,6 @@ void DMA1_Channel6_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel6_IRQn 0 */
 
   /* USER CODE END DMA1_Channel6_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_i2c2_rx);
   /* USER CODE BEGIN DMA1_Channel6_IRQn 1 */
 
   /* USER CODE END DMA1_Channel6_IRQn 1 */
@@ -225,7 +220,6 @@ void DMA1_Channel7_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Channel7_IRQn 0 */
 
   /* USER CODE END DMA1_Channel7_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_i2c2_tx);
   /* USER CODE BEGIN DMA1_Channel7_IRQn 1 */
 
   /* USER CODE END DMA1_Channel7_IRQn 1 */
@@ -237,10 +231,8 @@ void DMA1_Channel7_IRQHandler(void)
 void ADC1_2_IRQHandler(void)
 {
   /* USER CODE BEGIN ADC1_2_IRQn 0 */
-
+  sensor_adc_irq_handler();
   /* USER CODE END ADC1_2_IRQn 0 */
-  HAL_ADC_IRQHandler(&hadc1);
-  HAL_ADC_IRQHandler(&hadc2);
   /* USER CODE BEGIN ADC1_2_IRQn 1 */
 
   /* USER CODE END ADC1_2_IRQn 1 */
@@ -252,9 +244,8 @@ void ADC1_2_IRQHandler(void)
 void TIM2_IRQHandler(void)
 {
   /* USER CODE BEGIN TIM2_IRQn 0 */
-
+  sensor_tim2_irq_handler();
   /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
   /* USER CODE BEGIN TIM2_IRQn 1 */
 
   /* USER CODE END TIM2_IRQn 1 */
@@ -264,12 +255,28 @@ void TIM2_IRQHandler(void)
 
 void I2C2_EV_IRQHandler(void)
 {
-  HAL_I2C_EV_IRQHandler(&hi2c2);
+  if (LL_I2C_IsActiveFlag_ADDR(I2C2) != 0U) {
+    LL_I2C_ClearFlag_ADDR(I2C2);
+  }
+  if (LL_I2C_IsActiveFlag_NACK(I2C2) != 0U) {
+    LL_I2C_ClearFlag_NACK(I2C2);
+  }
+  if (LL_I2C_IsActiveFlag_STOP(I2C2) != 0U) {
+    LL_I2C_ClearFlag_STOP(I2C2);
+  }
 }
 
 void I2C2_ER_IRQHandler(void)
 {
-  HAL_I2C_ER_IRQHandler(&hi2c2);
+  if (LL_I2C_IsActiveFlag_BERR(I2C2) != 0U) {
+    LL_I2C_ClearFlag_BERR(I2C2);
+  }
+  if (LL_I2C_IsActiveFlag_ARLO(I2C2) != 0U) {
+    LL_I2C_ClearFlag_ARLO(I2C2);
+  }
+  if (LL_I2C_IsActiveFlag_OVR(I2C2) != 0U) {
+    LL_I2C_ClearFlag_OVR(I2C2);
+  }
 }
 
 /* USER CODE END 1 */

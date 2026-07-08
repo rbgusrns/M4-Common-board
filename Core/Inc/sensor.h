@@ -4,7 +4,7 @@
   * @brief   16-channel line sensor scanning and processing
   *
   * @note    Ported from sensor.h/_Viper_ (TMS320F2809)
-  *          ADC scanning redesigned for STM32G474 multi-ADC + DMA architecture
+  *          ADC scanning redesigned for STM32G474 TIM2-triggered ADC1/ADC2
  *          Refer to docs/sensor_system_design.md for hardware details
   ******************************************************************************
   */
@@ -12,7 +12,7 @@
 #ifndef __SENSOR_H__
 #define __SENSOR_H__
 
-#include "viper_variable.h"
+#include "variable.h"
 
 /* ──────────── Sensor system constants ──────────── */
 #define SEN_NUM     8       /* Number of scan steps (8 LED pairs) */
@@ -24,9 +24,6 @@
 /* ──────────── Sensor scan step info ──────────── */
 typedef struct {
     led_pin_t       led;            /* Emitter LED GPIO */
-    ADC_HandleTypeDef *hadc_hi;     /* ADC for Hi sensor (S7→S0) */
-    ADC_HandleTypeDef *hadc_lo;     /* ADC for Lo sensor (S15→S8) */
-    uint8_t         dma_rank_idx;   /* Shared ADC DMA frame index for this step */
     uint8_t         sen_hi_idx;     /* Index into g_sen[] for Hi */
     uint8_t         sen_lo_idx;     /* Index into g_sen[] for Lo */
 } scan_step_t;
@@ -41,6 +38,8 @@ extern volatile uint8_t g_scan_step;
 /* Initialization */
 void sen_vari_init(void);
 void sensor_scan_start(void);
+void sensor_adc_irq_handler(void);
+void sensor_tim2_irq_handler(void);
 
 /* Calibration & display */
 void F_4095(void);

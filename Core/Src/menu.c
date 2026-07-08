@@ -5,7 +5,7 @@
 #include "rom.h"
 #include "search.h"
 #include "fastrun.h"
-#include "viper_variable.h"
+#include "variable.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -36,7 +36,7 @@ char menu_sel[ROW][COLUMN][9] = {
 void _NULL_FUNC(void)
 {
     OLED_Printf(0U, 0U, "NOTTING_");
-    HAL_Delay(500);
+    LL_mDelay(500);
 }
 
 void (* menu_functions[ROW][COLUMN])(void) = 
@@ -50,7 +50,7 @@ void (* menu_functions[ROW][COLUMN])(void) =
 void menu(void)
 {
     if(Down_SW || Down_W) { 
-        HAL_Delay(DELAY); 
+        LL_mDelay(DELAY); 
         row++;  
         column = 0; 
         if(row > ROW - 1)
@@ -60,7 +60,7 @@ void menu(void)
     }
 
     if(Right_SW || Right_W) { 
-        HAL_Delay(DELAY); 
+        LL_mDelay(DELAY); 
         column++; 
         if(column > COLUMN - 1)
         {
@@ -69,7 +69,7 @@ void menu(void)
     }
 
     if(Left_SW || Left_W) { 
-        HAL_Delay(DELAY); 
+        LL_mDelay(DELAY); 
         column--; 
         if(column < 0)
         {
@@ -78,7 +78,7 @@ void menu(void)
     }
 
     if(Up_SW) { 
-        HAL_Delay(DELAY); 
+        LL_mDelay(DELAY); 
         if(menu_functions[row][column] != NULL) {
             menu_functions[row][column](); 
             OLED_Clear();
@@ -150,6 +150,6 @@ void menu_start(void)
     while(1) 
     {     
          menu();
-         HAL_Delay(1); 
+         LL_mDelay(1); 
     }
 }
