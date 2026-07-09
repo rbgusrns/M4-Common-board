@@ -67,22 +67,22 @@ typedef struct {
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Sensor ON/OFF shorthand macros (S0~S15)
  * ═══════════════════════════════════════════════════════════════════════════ */
-#define S0  g_sen[0].iq17_ON_OFF_value
-#define S1  g_sen[1].iq17_ON_OFF_value
-#define S2  g_sen[2].iq17_ON_OFF_value
-#define S3  g_sen[3].iq17_ON_OFF_value
-#define S4  g_sen[4].iq17_ON_OFF_value
-#define S5  g_sen[5].iq17_ON_OFF_value
-#define S6  g_sen[6].iq17_ON_OFF_value
-#define S7  g_sen[7].iq17_ON_OFF_value
-#define S8  g_sen[8].iq17_ON_OFF_value
-#define S9  g_sen[9].iq17_ON_OFF_value
-#define S10 g_sen[10].iq17_ON_OFF_value
-#define S11 g_sen[11].iq17_ON_OFF_value
-#define S12 g_sen[12].iq17_ON_OFF_value
-#define S13 g_sen[13].iq17_ON_OFF_value
-#define S14 g_sen[14].iq17_ON_OFF_value
-#define S15 g_sen[15].iq17_ON_OFF_value
+#define S0  g_sen[0].fp32_on_off_value
+#define S1  g_sen[1].fp32_on_off_value
+#define S2  g_sen[2].fp32_on_off_value
+#define S3  g_sen[3].fp32_on_off_value
+#define S4  g_sen[4].fp32_on_off_value
+#define S5  g_sen[5].fp32_on_off_value
+#define S6  g_sen[6].fp32_on_off_value
+#define S7  g_sen[7].fp32_on_off_value
+#define S8  g_sen[8].fp32_on_off_value
+#define S9  g_sen[9].fp32_on_off_value
+#define S10 g_sen[10].fp32_on_off_value
+#define S11 g_sen[11].fp32_on_off_value
+#define S12 g_sen[12].fp32_on_off_value
+#define S13 g_sen[13].fp32_on_off_value
+#define S14 g_sen[14].fp32_on_off_value
+#define S15 g_sen[15].fp32_on_off_value
 
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Turn direction / state defines
@@ -122,7 +122,6 @@ typedef enum
 /* Original: STEP_D = _IQ(0.823882502), STEP_2D = _IQ(1.647765004) */
 #define STEP_D      0.823882502f
 #define STEP_2D     1.647765004f
-#define q15STEP_D   0.823882502f
 
 
 
@@ -146,52 +145,52 @@ extern int      a, b, d, A_HANDLE, D_HANDLE, cnt, S, N;
 extern double   c;
 
 extern float    g_fp32time;
-extern float    g_q7large_vel;
-extern float    g_q15cross_dist;
-extern float    g_q17_handle_dec;
-extern float    g_q17_handle_acc;
-extern float    g_q17cross_dist;
-extern float    g_q17user_vel;
+extern float    g_fp32_large_vel;
+extern float    g_fp32_cross_dist;
+extern float    g_fp32_handle_dec;
+extern float    g_fp32_handle_acc;
+extern float    g_fp32_turn_cross_dist;
+extern float    g_fp32_user_vel;
 
-extern volatile uint32_t g_int32_sen_cnt;
-extern volatile uint32_t g_int32_copmare_cnt;
-extern volatile uint32_t g_int32_lineout_cnt;
+extern volatile uint32_t g_u32_sen_cnt;
+extern volatile uint32_t g_u32_compare_cnt;
+extern volatile uint32_t g_u32_lineout_cnt;
 extern volatile uint32_t g_u32_ACC_targetval;
 extern volatile uint32_t g_u32_VEL_targetval;
 extern volatile uint32_t g_u32_END_ACC_targetval;
 extern volatile uint32_t g_u32_END_VEL_targetval;
 extern volatile uint32_t g_u32_R_index;
 extern volatile uint32_t g_u32_L_index;
-extern volatile uint32_t g_int32_dist_check;
-extern volatile uint32_t g_int32_start_end_cnt;
-extern volatile uint32_t g_int32_cross_cnt;
-extern volatile uint32_t g_int32_rturnmark_cnt;
-extern volatile uint32_t g_int32_lturnmark_cnt;
-extern volatile uint32_t g_int32_turnmark_cnt;
-extern volatile uint32_t g_int32total_cnt;
+extern volatile uint32_t g_u32_dist_check;
+extern volatile uint32_t g_u32_start_end_cnt;
+extern volatile uint32_t g_u32_cross_cnt;
+extern volatile uint32_t g_u32_rturnmark_cnt;
+extern volatile uint32_t g_u32_lturnmark_cnt;
+extern volatile uint32_t g_u32_turnmark_cnt;
+extern volatile uint32_t g_u32_total_cnt;
 
-extern uint32_t g_int32_isr_cnt;
+extern uint32_t g_u32_isr_cnt;
 
 extern int32_t  g_i32_Time_index;
-extern int32_t  g_u32_sec_acc;
-extern int32_t  g_int32turn_45_VEL;
-extern int32_t  g_int32turn_90_VEL;
-extern int32_t  g_int32turn_180_VEL;
-extern int32_t  g_int32turn_270_VEL;
-extern int32_t  g_int32turn_LARGE_VEL;
-extern int32_t  g_int32long_ACC;
-extern int32_t  g_int32mid_ACC;
-extern int32_t  g_int32short_ACC;
-extern int32_t  g_int32speed_up_cnt;
-extern int32_t  g_int32large_ACC;
+extern int32_t  g_i32_sec_acc;
+extern int32_t  g_i32_turn_45_vel;
+extern int32_t  g_i32_turn_90_vel;
+extern int32_t  g_i32_turn_180_vel;
+extern int32_t  g_i32_turn_270_vel;
+extern int32_t  g_i32_turn_large_vel;
+extern int32_t  g_i32_long_acc;
+extern int32_t  g_i32_mid_acc;
+extern int32_t  g_i32_short_acc;
+extern int32_t  g_i32_speed_up_cnt;
+extern int32_t  g_i32_large_acc;
 
-extern volatile uint16_t U16_turnmark_cnt;
+extern volatile uint16_t g_u16_turnmark_cnt;
 
 extern uint16_t i;
 extern uint16_t g_u16pos_cnt;
 extern uint16_t g_u16turn_dist;
-extern uint16_t g_i16_handle_acc;
-extern uint16_t g_i16_handle_dec;
+extern uint16_t g_u16_handle_acc;
+extern uint16_t g_u16_handle_dec;
 
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Step motor phase patterns (BSRR values for STM32)

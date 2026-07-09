@@ -1,4 +1,4 @@
-﻿/* USER CODE BEGIN Header */
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -117,7 +117,7 @@ int main(void)
   Variable_Init();
   printf("Hello USART1\r\n");
   menu_start();
-  
+
   /* USER CODE END 2 */
 
   /* Infinite loop */

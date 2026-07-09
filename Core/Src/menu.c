@@ -30,7 +30,7 @@ char menu_sel[ROW][COLUMN][9] = {
     {"MAX_MIN_", "__4095__", "SEN_127_", "Set_MARK", "__GYRO__"},
     {"Set_VELO", "Set_ACC_", "Set_HAND", "Set_MPID", "Set_PPID"},
     {"1st_RACE", "2nd_RACE", "fst_info", "brl_info", "  NULL  "},
-    {"Bril_ctl", "_ MODE _", "Brl_RACE", "SFT_CTRL", "  NULL  "}    
+    {"Bril_ctl", "_ MODE _", "Brl_RACE", "SFT_CTRL", "  NULL  "}
 };
 
 void _NULL_FUNC(void)
@@ -39,54 +39,54 @@ void _NULL_FUNC(void)
     LL_mDelay(500);
 }
 
-void (* menu_functions[ROW][COLUMN])(void) = 
+void (* menu_functions[ROW][COLUMN])(void) =
 {
     {F_Max_min,    F_4095,         F_127,        F_TURNMARK, _NULL_FUNC},
     {F_VELOCITY,   F_ACCELERATION, F_HANDLE_ACC, _NULL_FUNC, _NULL_FUNC},
     {F_1st_run,    second_race,    _NULL_FUNC,   _NULL_FUNC, _NULL_FUNC},
-    {_NULL_FUNC,   _NULL_FUNC,     _NULL_FUNC,   _NULL_FUNC,   _NULL_FUNC}           
-};        
+    {_NULL_FUNC,   _NULL_FUNC,     _NULL_FUNC,   _NULL_FUNC,   _NULL_FUNC}
+};
 
 void menu(void)
 {
-    if(Down_SW || Down_W) { 
-        LL_mDelay(DELAY); 
-        row++;  
-        column = 0; 
+    if(Down_SW || Down_W) {
+        LL_mDelay(DELAY);
+        row++;
+        column = 0;
         if(row > ROW - 1)
         {
             row = 0;
         }
     }
 
-    if(Right_SW || Right_W) { 
-        LL_mDelay(DELAY); 
-        column++; 
+    if(Right_SW || Right_W) {
+        LL_mDelay(DELAY);
+        column++;
         if(column > COLUMN - 1)
         {
             column = 0;
         }
     }
 
-    if(Left_SW || Left_W) { 
-        LL_mDelay(DELAY); 
-        column--; 
+    if(Left_SW || Left_W) {
+        LL_mDelay(DELAY);
+        column--;
         if(column < 0)
         {
             column = COLUMN - 1;
         }
     }
 
-    if(Up_SW) { 
-        LL_mDelay(DELAY); 
+    if(Up_SW) {
+        LL_mDelay(DELAY);
         if(menu_functions[row][column] != NULL) {
-            menu_functions[row][column](); 
+            menu_functions[row][column]();
             OLED_Clear();
         }
     }
-    
+
     OLED_ClearBuffer();
-    
+
     char cat_buf[40];
     const char *cat_name = "";
     if (row == 0)
@@ -113,7 +113,7 @@ void menu(void)
     memset(cat_buf, ' ', pad_cat);
     cat_buf[pad_cat] = '\0';
     snprintf(cat_buf + pad_cat, sizeof(cat_buf) - pad_cat, "%s", temp_cat);
-    
+
     char scroll_buf[40];
     char dots[10] = "o o o o o";
     dots[column * 2] = '*';
@@ -144,12 +144,12 @@ void menu(void)
 
 void menu_start(void)
 {
-    OLED_Init(); 
+    OLED_Init();
     sensor_scan_start();
 
-    while(1) 
-    {     
+    while(1)
+    {
          menu();
-         LL_mDelay(1); 
+         LL_mDelay(1);
     }
 }

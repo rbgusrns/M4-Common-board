@@ -1,4 +1,4 @@
-﻿# 라인트레이서 센서부 설계 문서
+# 라인트레이서 센서부 설계 문서
 
 이 문서는 현재 코드 기준의 센서 스캔 구조를 설명한다. 예전 ADC DMA 기반 설계나 `sensor_scan_poll()` 기반 프레임 처리 흐름은 현재 코드에 남아 있지 않다.
 
@@ -84,12 +84,12 @@ ADC 설정은 다음과 같다.
 
 ADC2 EOC 인터럽트에서 다음 값을 즉시 갱신한다.
 
-- `g_sen[idx].iq17_4095_value`
-- `g_sen[idx].iq17_127_value`
-- `g_sen[idx].iq17_ON_OFF_value`
+- `g_sen[idx].fp32_4095_value`
+- `g_sen[idx].fp32_127_value`
+- `g_sen[idx].fp32_on_off_value`
 - `g_pos.u16state`
 - `g_Flag.lineout_flag`
-- `g_int32_isr_cnt`
+- `g_u32_isr_cnt`
 
 현재 코드에는 별도의 `g_frame_ready` 플래그나 `sensor_scan_poll()` 흐름이 없다. full-frame 완료 후 한 번에 후처리하는 구조가 아니라, 각 ADC 완료 인터럽트에서 해당 스텝의 두 센서를 바로 처리한다.
 

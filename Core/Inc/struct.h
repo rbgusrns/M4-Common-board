@@ -27,11 +27,11 @@ typedef struct first_race_info
     int32_t int32turn_cnt;
     int32_t int32accel;
 
-    float iq7in_vel;
-    float iq7vel;
-    float iq7out_vel;
-    float iq7dec_dist;
-    float iq7m_dist;
+    float fp32in_vel;
+    float fp32vel;
+    float fp32out_vel;
+    float fp32decel_dist;
+    float fp32motion_dist;
 } race_info;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -39,16 +39,16 @@ typedef struct first_race_info
  * ═══════════════════════════════════════════════════════════════════════════ */
 typedef volatile struct sensor_variable
 {
-    float iq17_4095_value;
-    float iq17_4095_min_value;
-    float iq17_4095_max_value;
-    float iq17_127_value;
-    float iq17_ON_OFF_value;
+    float fp32_4095_value;
+    float fp32_4095_min_value;
+    float fp32_4095_max_value;
+    float fp32_127_value;
+    float fp32_on_off_value;
 
     uint16_t u16active_arr;
     uint16_t u16passive_arr;
 
-    float iq7weight;
+    float fp32weight;
 } sen_t;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -65,15 +65,15 @@ typedef struct shift_str
  * ═══════════════════════════════════════════════════════════════════════════ */
 typedef volatile struct position
 {
-    float iq17sum;
-    float iq7sum;
-    float iq7sum_of_sec;
-    float iq7temp_pos;
+    float fp32sensor_sum;
+    float fp32position_sum;
+    float fp32weighted_sum;
+    float fp32temp_pos;
 
     uint16_t u16enable;
     uint16_t u16state;
 
-    float iq10temp_position;
+    float fp32temp_position;
 } position_t;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -81,10 +81,10 @@ typedef volatile struct position
  * ═══════════════════════════════════════════════════════════════════════════ */
 typedef volatile struct
 {
-    float   iq17turnmark_dist;
-    float   iq17check_dist;
-    float   iq17limit_dist;
-    float   iq17Turnmark_Check_Dist;
+    float   fp32turnmark_dist;
+    float   fp32check_dist;
+    float   fp32limit_dist;
+    float   fp32turnmark_check_dist;
 
     uint16_t u16State;
     uint16_t u16mark_enable;
@@ -104,30 +104,30 @@ typedef volatile struct str_point
  * ═══════════════════════════════════════════════════════════════════════════ */
 typedef struct
 {
-    float   iqTargetA;          ///< Target acceleration
-    float   iqDist;             ///< Target distance
-    float   iqVelo;             ///< Current velocity
-    float   iqTargetV;          ///< Target velocity
-    float   iqNextV;            ///< Next velocity (computed per step)
-    float   iqAmpyS;
-    float   iqHandle;           ///< Steering multiplier (0.0~1.0+)
-    float   iqTotalDis;         ///< Total distance traveled
-    float   iq24TargetA_1;
-    float   iq24TimeValue;
+    float   fp32target_accel;          ///< Target acceleration
+    float   fp32target_dist;             ///< Target distance
+    float   fp32velocity;             ///< Current velocity
+    float   fp32target_vel;          ///< Target velocity
+    float   fp32next_vel;            ///< Next velocity (computed per step)
+    float   fp32accel_step;
+    float   fp32handle;           ///< Steering multiplier (0.0~1.0+)
+    float   fp32total_dist;         ///< Total distance traveled
+    float   fp32target_accel_inv;
+    float   fp32time_value;
 
     uint32_t u32_Period_Cnt;
     uint32_t u32_Period;
     uint16_t u16_pPeriod;
 
-    float   iq17Turnmark_Check_Dist;
-    float   iq15GoneDist;
-    float   iq15Cross_Check_Dist;
-    float   iq17Start_Check_Dist;
-    float   iq17distance_sum;
-    float   iq17decel_distance;
-    float   iq17err_distance;
-    float   iq17user_distance;
-    float   iq17decel_vel;
+    float   fp32turnmark_check_dist;
+    float   fp32gone_dist;
+    float   fp32cross_check_dist;
+    float   fp32start_check_dist;
+    float   fp32distance_sum;
+    float   fp32decel_distance;
+    float   fp32err_distance;
+    float   fp32user_distance;
+    float   fp32decel_vel;
 
     uint16_t u16decel_flag;
 } MOTORCTRL;
