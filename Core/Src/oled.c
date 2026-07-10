@@ -9,6 +9,8 @@
 #define OLED_BUFFER_SIZE (OLED_WIDTH * OLED_PAGE_COUNT)
 #define OLED_TX_CHUNK_SIZE (OLED_WIDTH + 1U)
 #define OLED_TEXT_BUFFER_SIZE 32U
+#define OLED_SERIAL_LINE_SIZE 40U
+#define OLED_SERIAL_PRINT_HOLDOFF 25U
 
 const uint8_t font5x7[95][5] = {
   {0x00,0x00,0x00,0x00,0x00}, // ' '
@@ -110,12 +112,57 @@ const uint8_t font5x7[95][5] = {
 
 static uint8_t draw_buffer[OLED_BUFFER_SIZE];
 static uint8_t frame_buffer[OLED_BUFFER_SIZE];
+#if OLED_SERIAL_FALLBACK
+static char serial_rows[OLED_PAGE_COUNT][OLED_SERIAL_LINE_SIZE];
+static uint8_t serial_row_holdoff[OLED_PAGE_COUNT];
+static uint8_t serial_bar_holdoff;
+#endif
 
 static void OLED_I2C_ClearErrorFlags(void);
 static uint8_t OLED_I2C_Write(const uint8_t *data, uint16_t len, uint32_t timeout);
 static void OLED_Cmd(uint8_t cmd);
 static void OLED_DrawChar(uint8_t x, uint8_t page, char ch);
 static void OLED_UpdateBlocking(void);
+#if OLED_SERIAL_FALLBACK
+static void OLED_SerialPrintRow(uint8_t row, uint8_t col, const char *str);
+#endif
+
+#if OLED_SERIAL_FALLBACK
+static void OLED_SerialPrintRow(uint8_t row, uint8_t col, const char *str)
+{
+    char line[OLED_SERIAL_LINE_SIZE];
+    uint8_t pos = 0U;
+
+    if ((row >= OLED_PAGE_COUNT) || (str == NULL)) {
+        return;
+    }
+
+    if (serial_row_holdoff[row] != 0U) {
+        serial_row_holdoff[row]--;
+    }
+
+    while ((pos < col) && (pos < (OLED_SERIAL_LINE_SIZE - 1U))) {
+        line[pos++] = ' ';
+    }
+
+    while ((*str != '\0') && (pos < (OLED_SERIAL_LINE_SIZE - 1U))) {
+        line[pos++] = *str++;
+    }
+    line[pos] = '\0';
+
+    if (strncmp(serial_rows[row], line, OLED_SERIAL_LINE_SIZE) == 0) {
+        return;
+    }
+
+    strncpy(serial_rows[row], line, OLED_SERIAL_LINE_SIZE - 1U);
+    serial_rows[row][OLED_SERIAL_LINE_SIZE - 1U] = '\0';
+
+    if (serial_row_holdoff[row] == 0U) {
+        printf("[OLED%u] %s\n", (unsigned)row, serial_rows[row]);
+        serial_row_holdoff[row] = OLED_SERIAL_PRINT_HOLDOFF;
+    }
+}
+#endif
 
 static void OLED_I2C_ClearErrorFlags(void)
 {
@@ -214,6 +261,12 @@ static void OLED_Cmd(uint8_t cmd)
 }
 void OLED_Init(void)
 {
+#if OLED_SERIAL_FALLBACK
+    printf("[OLED] serial fallback active, hardware=%u\n", (unsigned)OLED_HW_ENABLE);
+#endif
+#if !OLED_HW_ENABLE
+    return;
+#endif
     LL_mDelay(100U);
 
     OLED_Cmd(0xAEU);
@@ -253,6 +306,13 @@ void OLED_Init(void)
 
 void OLED_Clear(void)
 {
+#if OLED_SERIAL_FALLBACK
+    memset(serial_rows, 0, sizeof(serial_rows));
+    memset(serial_row_holdoff, 0, sizeof(serial_row_holdoff));
+#endif
+#if !OLED_HW_ENABLE
+    return;
+#endif
     memset(draw_buffer, 0, sizeof(draw_buffer));
     OLED_Update();
 }
@@ -264,6 +324,9 @@ uint8_t OLED_IsBusy(void)
 
 void OLED_Update(void)
 {
+#if !OLED_HW_ENABLE
+    return;
+#endif
     OLED_UpdateBlocking();
 }
 
@@ -271,6 +334,13 @@ void OLED_Print(uint8_t row, uint8_t col, const char *str)
 {
     uint8_t x = (uint8_t)(col * 6U);
 
+#if OLED_SERIAL_FALLBACK
+    OLED_SerialPrintRow(row, col, str);
+#endif
+#if !OLED_HW_ENABLE
+    (void)x;
+    return;
+#endif
     if ((row >= OLED_PAGE_COUNT) || (str == NULL))
     {
         return;
@@ -348,6 +418,24 @@ static void OLED_UpdateBlocking(void)
 
 void OLED_DrawSensorBars(const float values[16])
 {
+#if OLED_SERIAL_FALLBACK
+    if (serial_bar_holdoff != 0U) {
+        serial_bar_holdoff--;
+    } else if (values != NULL) {
+        printf("[SEN127] ");
+        for (uint8_t i = 0U; i < 16U; i++) {
+            printf("%3d", (int)values[i]);
+            if (i != 15U) {
+                printf(",");
+            }
+        }
+        printf("\n");
+        serial_bar_holdoff = OLED_SERIAL_PRINT_HOLDOFF;
+    }
+#endif
+#if !OLED_HW_ENABLE
+    return;
+#endif
     memset(draw_buffer, 0, sizeof(draw_buffer));
 
     for (uint8_t i = 0U; i < 16U; i++)
@@ -392,5 +480,8 @@ void OLED_DrawSensorBars(const float values[16])
 
 void OLED_ClearBuffer(void)
 {
+#if !OLED_HW_ENABLE
+    return;
+#endif
     memset(draw_buffer, 0, sizeof(draw_buffer));
 }

@@ -4,7 +4,7 @@
   * @brief   16-channel line sensor scanning and processing
   *
   * @note    Ported from sensor.h/_Viper_ (TMS320F2809)
-  *          ADC scanning redesigned for STM32G474 TIM2-triggered ADC1/ADC2
+ *          ADC scanning uses the legacy timer ISR + ADC ISR split
  *          Refer to docs/sensor_system_design.md for hardware details
   ******************************************************************************
   */
@@ -40,6 +40,8 @@ void sen_vari_init(void);
 void sensor_scan_start(void);
 void sensor_adc_irq_handler(void);
 void sensor_tim2_irq_handler(void);
+void Sensor_Value(void);
+void adc_timer_ISR(void);
 
 /* Calibration & display */
 void F_4095(void);

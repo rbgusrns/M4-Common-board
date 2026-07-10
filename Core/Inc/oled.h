@@ -7,6 +7,14 @@
 #define OLED_HEIGHT 32U
 #define OLED_PAGE_COUNT (OLED_HEIGHT / 8U)
 
+#ifndef OLED_HW_ENABLE
+#define OLED_HW_ENABLE 0U
+#endif
+
+#ifndef OLED_SERIAL_FALLBACK
+#define OLED_SERIAL_FALLBACK 1U
+#endif
+
 void OLED_Init(void);
 void OLED_Clear(void);
 void OLED_Update(void);

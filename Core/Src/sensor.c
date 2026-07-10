@@ -113,8 +113,12 @@ static void sensor_adc_start_pair(void)
     LL_ADC_EnableIT_OVR(ADC1);
     LL_ADC_EnableIT_OVR(ADC2);
     LL_ADC_EnableIT_EOC(ADC2);
-    LL_ADC_REG_StartConversion(ADC1);
-    LL_ADC_REG_StartConversion(ADC2);
+    if (LL_ADC_REG_IsConversionOngoing(ADC1) == 0U) {
+        LL_ADC_REG_StartConversion(ADC1);
+    }
+    if (LL_ADC_REG_IsConversionOngoing(ADC2) == 0U) {
+        LL_ADC_REG_StartConversion(ADC2);
+    }
 }
 
 static void sensor_tim2_start_trigger(void)
@@ -122,7 +126,7 @@ static void sensor_tim2_start_trigger(void)
     LL_TIM_ClearFlag_UPDATE(TIM2);
     LL_TIM_ClearFlag_CC2(TIM2);
     LL_TIM_SetCounter(TIM2, 0U);
-    LL_TIM_GenerateEvent_UPDATE(TIM2);
+    LL_TIM_EnableIT_UPDATE(TIM2);
     LL_TIM_CC_EnableChannel(TIM2, LL_TIM_CHANNEL_CH2);
     LL_TIM_EnableCounter(TIM2);
 }
@@ -130,6 +134,8 @@ static void sensor_tim2_start_trigger(void)
 static void sensor_tim2_stop_trigger(void)
 {
     LL_TIM_DisableCounter(TIM2);
+    LL_TIM_DisableIT_UPDATE(TIM2);
+    LL_TIM_DisableIT_CC2(TIM2);
     LL_TIM_CC_DisableChannel(TIM2, LL_TIM_CHANNEL_CH2);
     LL_TIM_SetCounter(TIM2, 0U);
     LL_TIM_ClearFlag_UPDATE(TIM2);
@@ -148,10 +154,10 @@ void sensor_scan_start(void)
 
     g_scan_step = 0;
     g_adc_step = 0;
-    sensor_set_active_step(0);
 
     sensor_adc_clear_flags();
     sensor_adc_start_pair();
+    Sensor_Value();
     sensor_tim2_start_trigger();
 }
 
@@ -169,6 +175,7 @@ static void sensor_adc_recover_from_error(void)
     sensor_adc_enable_ready(ADC1);
     sensor_adc_enable_ready(ADC2);
     sensor_adc_start_pair();
+    Sensor_Value();
     sensor_tim2_start_trigger();
 }
 
@@ -268,11 +275,9 @@ static void sensor_process_adc_step(uint32_t val_hi, uint32_t val_lo)
     if (g_adc_step >= SEN_NUM) {
         g_adc_step = 0;
     }
-    g_scan_step = g_adc_step;
-    sensor_led_on(&scan_table[g_scan_step].led);
 }
 
-void sensor_adc_irq_handler(void)
+void adc_timer_ISR(void)
 {
     uint32_t adc1_isr = ADC1->ISR;
     uint32_t adc2_isr = ADC2->ISR;
@@ -295,10 +300,26 @@ void sensor_adc_irq_handler(void)
     }
 }
 
+void Sensor_Value(void)
+{
+    if (g_adc_step >= SEN_NUM) {
+        g_adc_step = 0;
+    }
+
+    g_scan_step = g_adc_step;
+    sensor_set_active_step(g_scan_step);
+}
+
+void sensor_adc_irq_handler(void)
+{
+    adc_timer_ISR();
+}
+
 void sensor_tim2_irq_handler(void)
 {
     if (LL_TIM_IsActiveFlag_UPDATE(TIM2) != 0U) {
         LL_TIM_ClearFlag_UPDATE(TIM2);
+        Sensor_Value();
     }
     if (LL_TIM_IsActiveFlag_CC2(TIM2) != 0U) {
         LL_TIM_ClearFlag_CC2(TIM2);
