@@ -20,7 +20,6 @@ void F_HANDLE_ACC(void);
 void F_HANDLE_DEC(void);
 void F_ENDACCEL(void);
 void F_TURNDIST(void);
-void HANDLE_SELECT(void);
 
 /* ──────────── Motor control core ──────────── */
 void motor_vari_init(void);

@@ -3,11 +3,10 @@
 
 #include "variable.h"
 
-#define ROW 4
+#define ROW 3
 #define COLUMN 5
 
 void menu(void);
 void menu_start(void);
-void _NULL_FUNC(void);
 
 #endif

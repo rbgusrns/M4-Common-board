@@ -15,7 +15,6 @@
 void Race_Init(void);
 void search_race(void);
 void F_1st_run(void);
-void MARKCHECKING(void);
 int  lineout(void);
 int  race_stop_check(void);
 

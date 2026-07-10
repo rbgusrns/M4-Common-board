@@ -27,24 +27,18 @@ int32_t row = 0;
 int32_t column = 0;
 
 char menu_sel[ROW][COLUMN][9] = {
-    {"MAX_MIN_", "__4095__", "SEN_127_", "Set_MARK", "__GYRO__"},
-    {"Set_VELO", "Set_ACC_", "Set_HAND", "Set_MPID", "Set_PPID"},
-    {"1st_RACE", "2nd_RACE", "fst_info", "brl_info", "  NULL  "},
-    {"Bril_ctl", "_ MODE _", "Brl_RACE", "SFT_CTRL", "  NULL  "}
+    {"MAX_MIN_", "__4095__", "SEN_127_", "POSCHECK", "TURNMARK"},
+    {"Set_VELO", "Set_ACC_", "END_ACC_", "HAND_ACC", "HAND_DEC"},
+    {"1st_RACE", "2nd_RACE", "TURNDIST", "", ""}
 };
 
-void _NULL_FUNC(void)
-{
-    OLED_Printf(0U, 0U, "NOTTING_");
-    LL_mDelay(500);
-}
+static const uint8_t menu_item_count[ROW] = {5U, 5U, 3U};
 
 void (* menu_functions[ROW][COLUMN])(void) =
 {
-    {F_Max_min,    F_4095,         F_127,        F_TURNMARK, _NULL_FUNC},
-    {F_VELOCITY,   F_ACCELERATION, F_HANDLE_ACC, _NULL_FUNC, _NULL_FUNC},
-    {F_1st_run,    second_race,    _NULL_FUNC,   _NULL_FUNC, _NULL_FUNC},
-    {_NULL_FUNC,   _NULL_FUNC,     _NULL_FUNC,   _NULL_FUNC,   _NULL_FUNC}
+    {F_Max_min,    F_4095,         F_127,        F_POSCHECK,   F_TURNMARK},
+    {F_VELOCITY,   F_ACCELERATION, F_ENDACCEL,   F_HANDLE_ACC, F_HANDLE_DEC},
+    {F_1st_run,    second_race,    F_TURNDIST,   NULL,         NULL}
 };
 
 void menu(void)
@@ -62,7 +56,7 @@ void menu(void)
     if(Right_SW || Right_W) {
         LL_mDelay(DELAY);
         column++;
-        if(column > COLUMN - 1)
+        if(column >= menu_item_count[row])
         {
             column = 0;
         }
@@ -73,16 +67,14 @@ void menu(void)
         column--;
         if(column < 0)
         {
-            column = COLUMN - 1;
+            column = (int32_t)menu_item_count[row] - 1;
         }
     }
 
     if(Up_SW) {
         LL_mDelay(DELAY);
-        if(menu_functions[row][column] != NULL) {
-            menu_functions[row][column]();
-            OLED_Clear();
-        }
+        menu_functions[row][column]();
+        OLED_Clear();
     }
 
     OLED_ClearBuffer();
@@ -101,10 +93,6 @@ void menu(void)
     {
         cat_name = "RACE";
     }
-    else if (row == 3)
-    {
-        cat_name = "EXT";
-    }
     char temp_cat[32];
     snprintf(temp_cat, sizeof(temp_cat), "%s GROUP", cat_name);
     int pad_cat = (21 - (int)strlen(temp_cat)) / 2;
@@ -115,8 +103,14 @@ void menu(void)
     snprintf(cat_buf + pad_cat, sizeof(cat_buf) - pad_cat, "%s", temp_cat);
 
     char scroll_buf[40];
-    char dots[10] = "o o o o o";
-    dots[column * 2] = '*';
+    char dots[10];
+    uint8_t item_count = menu_item_count[row];
+    for (uint8_t idx = 0U; idx < item_count; idx++)
+    {
+        dots[idx * 2U] = (idx == (uint8_t)column) ? '*' : 'o';
+        dots[idx * 2U + 1U] = ' ';
+    }
+    dots[(item_count * 2U) - 1U] = '\0';
     int pad_scroll = (21 - (int)strlen(dots)) / 2;
     if (pad_scroll < 0) pad_scroll = 0;
     if (pad_scroll > 20) pad_scroll = 20;

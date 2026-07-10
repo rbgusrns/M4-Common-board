@@ -8,7 +8,6 @@
 
 static void turn_division_func(void);
 static void turn_division_compute(race_info *pinfo, int32_t mark);
-static void large_turn_compute(race_info *pinfo, int32_t mark);
 static void straight_compute(race_info *pinfo, int32_t mark);
 static void default_turn_compute(race_info *pinfo, int32_t mark);
 static void speed_up_func(void);
@@ -104,45 +103,8 @@ static void turn_division_compute( race_info *pinfo, int32_t mark)
 {
     if( ( pinfo->int32turn_dir & STRAIGHT ) || pinfo->int32turn_dir & END_TURN )
         straight_compute( pinfo , mark );
-    else if( pinfo->int32turn_dir & LARGE_TURN )
-        large_turn_compute( pinfo, mark);
     else
         default_turn_compute( pinfo , mark );
-}
-
-static void large_turn_compute( race_info *pinfo, int32_t mark)
-{
-    volatile float big_vel = 0.0f;
-    volatile float small_vel = 0.0f;
-
-    pinfo->fp32in_vel = (mark > 0) ? ( pinfo - 1 )->fp32out_vel : 0.0f;
-
-    turn_division_compute( ( pinfo + 1 ), ( mark + 1 ));
-    pinfo->fp32out_vel = ( pinfo + 1 )->fp32in_vel;
-
-    pinfo->int32accel = g_i32_large_acc;
-
-    big_vel = ( pinfo->fp32in_vel > pinfo->fp32out_vel )? pinfo->fp32in_vel : pinfo->fp32out_vel;
-    small_vel = ( pinfo->fp32in_vel > pinfo->fp32out_vel )? pinfo->fp32out_vel : pinfo->fp32in_vel;
-
-    decel_dist_compute( pinfo->fp32in_vel, pinfo->fp32out_vel, pinfo->int32accel, (float *)&pinfo->fp32motion_dist );
-
-    if( pinfo->fp32motion_dist >= (float)( pinfo->int32dist ) )
-    {
-        pinfo->fp32decel_dist = (float)( pinfo->int32dist );
-        max_vel_compute( (float)( pinfo->int32dist ), 0.0f, small_vel, pinfo->int32accel, (float *)&pinfo->fp32vel );
-
-        if( pinfo->fp32in_vel > pinfo->fp32out_vel )  pinfo->fp32in_vel = pinfo->fp32vel;
-        else                                        pinfo->fp32out_vel = pinfo->fp32vel;
-
-        if( !mark )
-            pinfo->fp32in_vel = 0.0f;
-    }
-    else
-    {
-        max_vel_compute( (float)( pinfo->int32dist ), pinfo->fp32motion_dist, big_vel, pinfo->int32accel, (float *)&pinfo->fp32vel );
-        decel_dist_compute( pinfo->fp32vel, pinfo->fp32out_vel, pinfo->int32accel, (float *)&pinfo->fp32decel_dist );
-    }
 }
 
 static void straight_compute( race_info *pinfo, int32_t mark)

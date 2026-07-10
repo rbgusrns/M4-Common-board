@@ -29,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "menu.h"
 #include "sensor.h"
+#include "search.h"
 #include "variable.h"
 #include <string.h>
 #include <stdio.h>
@@ -113,8 +114,9 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  sen_vari_init();
   Variable_Init();
+  sen_vari_init();
+  Race_Init();
   printf("Hello USART1\r\n");
   menu_start();
 

@@ -48,14 +48,10 @@ void F_4095(void);
 void F_Max_min(void);
 void F_127(void);
 void F_POSCHECK(void);
-void F_CHECKMAX(void);
-void F_CHECKMIN(void);
 void F_TURNMARK(void);
 
 /* Runtime processing */
-void sensor_normalize(uint8_t idx);
 void make_position(void);
-void position_check(void);
 void Handle(void);
 
 /* Turn mark detection */
