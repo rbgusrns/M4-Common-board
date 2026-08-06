@@ -176,6 +176,20 @@ void maxmin_read_rom( void )
     }
 }
 
+void Rom_ReadAll(void)
+{
+    read_acc_rom();
+    read_vel_rom();
+    read_end_acc_rom();
+    read_handle_acc_rom();
+    read_handle_dec_rom();
+    maxmin_read_rom();
+    read_line_info_rom();
+
+    g_fp32_handle_acc = (float)g_u16_handle_acc * 0.00000001f;
+    g_fp32_handle_dec = (float)g_u16_handle_dec * 0.0000001f;
+}
+
 void read_vel_rom()
 {
     uint16_t i = 0;

@@ -5,7 +5,6 @@ C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/st
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:689:22:LL_USART_DisableFIFO	16	static
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:722:22:LL_USART_SetTXFIFOThreshold	40	static,ignoring_inline_asm
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:761:22:LL_USART_SetRXFIFOThreshold	40	static,ignoring_inline_asm
-C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:1372:22:LL_USART_SetTXRXSwap	16	static
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:2677:22:LL_USART_ConfigAsyncMode	16	static
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:3012:26:LL_USART_IsActiveFlag_TC	16	static
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:3027:26:LL_USART_IsActiveFlag_TXE_TXFNF	16	static
@@ -13,6 +12,6 @@ C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/st
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:3208:26:LL_USART_IsActiveFlag_REACK	16	static
 C:/STproject/M4_STEP/cmake/stm32cubemx/../../Drivers/STM32G4xx_HAL_Driver/Inc/stm32g4xx_ll_usart.h:4278:22:LL_USART_TransmitData8	16	static
 C:/STproject/M4_STEP/Core/Src/usart.c:30:6:MX_USART1_UART_Init	64	static
-C:/STproject/M4_STEP/Core/Src/usart.c:102:6:USART1_Write	24	static
-C:/STproject/M4_STEP/Core/Src/usart.c:122:6:USART1_WriteString	16	static
-C:/STproject/M4_STEP/Core/Src/usart.c:143:5:__io_putchar	16	static
+C:/STproject/M4_STEP/Core/Src/usart.c:101:6:USART1_Write	24	static
+C:/STproject/M4_STEP/Core/Src/usart.c:121:6:USART1_WriteString	16	static
+C:/STproject/M4_STEP/Core/Src/usart.c:142:5:__io_putchar	16	static

@@ -1,5 +1,5 @@
-C:/STproject/M4_STEP/Core/Src/search.c:8:6:Race_Init	8	static
-C:/STproject/M4_STEP/Core/Src/search.c:62:6:F_1st_run	8	static
-C:/STproject/M4_STEP/Core/Src/search.c:81:5:race_stop_check	16	static
-C:/STproject/M4_STEP/Core/Src/search.c:118:5:lineout	8	static
-C:/STproject/M4_STEP/Core/Src/search.c:135:6:search_race	8	static
+C:/STproject/M4_STEP/Core/Src/search.c:8:6:Race_Init	4	static
+C:/STproject/M4_STEP/Core/Src/search.c:55:6:F_1st_run	8	static
+C:/STproject/M4_STEP/Core/Src/search.c:74:5:race_stop_check	16	static
+C:/STproject/M4_STEP/Core/Src/search.c:111:5:lineout	8	static
+C:/STproject/M4_STEP/Core/Src/search.c:128:6:search_race	8	static

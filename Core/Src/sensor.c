@@ -354,7 +354,6 @@ void sen_vari_init(void)
     g_sen[ 1 ].fp32weight = -13000.0f;       g_sen[ 14 ].u16active_arr = 0x0002;     g_sen[ 14 ].u16passive_arr = 0xfffd;
     g_sen[ 0 ].fp32weight = -16000.0f;       g_sen[ 15 ].u16active_arr = 0x0001;     g_sen[ 15 ].u16passive_arr = 0xfffe;
 
-    maxmin_read_rom();
 }
 
 static void position_enable(position_t *ppos)
@@ -888,8 +887,6 @@ void F_POSCHECK()
 
 void F_TURNMARK()
 {
-    read_mark_cnt_rom();
-    read_line_info_rom();
     cnt=0;
     OLED_Printf(0U, 0U, "MARK:%ld",g_u32_total_cnt);
 

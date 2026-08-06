@@ -1,0 +1,403 @@
+#include "motor.h"
+#include "oled.h"
+#include "rom.h"
+#include <string.h>
+#include <math.h>
+
+void F_ENDACCEL()
+{
+    while(SW_D)
+    {
+        OLED_ClearBuffer();
+        OLED_Printf(0U, 0U, "EDA:%lu", g_u32_END_ACC_targetval);
+        if (!SW_R)
+        {
+            LL_mDelay(135);
+            g_u32_END_ACC_targetval += 500;
+        }
+        else if (!SW_L)
+        {
+            LL_mDelay(135);
+            g_u32_END_ACC_targetval -= 500;
+        }
+        else if (!SW_U)
+        {
+            LL_mDelay(135);
+            g_u32_END_ACC_targetval = 8000;
+        }
+    }
+    write_end_acc_rom();
+    a = 2;
+    b = 2;
+}
+
+void F_ACCELERATION()
+{
+    a = 0;
+    while(SW_D)
+    {
+        OLED_ClearBuffer();
+        OLED_Printf(0U, 0U, "ACC=%lu", g_u32_ACC_targetval);
+        if (!SW_R)
+        {
+            LL_mDelay(125);
+            g_u32_ACC_targetval += 100;
+        }
+        else if (!SW_L)
+        {
+            LL_mDelay(125);
+            g_u32_ACC_targetval -= 100;
+        }
+    }
+
+    LL_mDelay(150);
+
+    while(SW_D)
+    {
+        OLED_Printf(0U, 0U, "ACC=%lu", g_i32_long_acc);
+        if (!SW_R)
+        {
+            LL_mDelay(125);
+            g_i32_long_acc += 100;
+        }
+        else if (!SW_L)
+        {
+            LL_mDelay(125);
+            g_i32_long_acc -= 100;
+        }
+    }
+
+    write_acc_rom();
+    a = 2;
+    b = 0;
+    LL_mDelay(100);
+}
+
+void F_HANDLE_ACC()
+{
+    while(SW_D)
+    {
+        OLED_ClearBuffer();
+        OLED_Printf(0U, 0U, "HDA=%4u", g_u16_handle_acc);
+        if (SW_R == 0)
+        {
+            LL_mDelay(125);
+            g_u16_handle_acc += 10;
+        }
+        else if (SW_L == 0)
+        {
+            LL_mDelay(125);
+            g_u16_handle_acc -= 10;
+        }
+    }
+    write_acc_handle_rom();
+    a = 3;
+    b = 0;
+    c = 0;
+    LL_mDelay(100);
+}
+
+void F_HANDLE_DEC()
+{
+    while(SW_D)
+    {
+        OLED_ClearBuffer();
+        OLED_Printf(0U, 0U, "HDD=%4u", g_u16_handle_dec);
+        if (SW_R == 0)
+        {
+            LL_mDelay(125);
+            g_u16_handle_dec += 5;
+        }
+        else if (SW_L == 0)
+        {
+            LL_mDelay(125);
+            D_HANDLE -= 5;
+            g_u16_handle_dec -= 5;
+        }
+    }
+    write_dec_handle_rom();
+    a = 4;
+    b = 0;
+    c = 0;
+    LL_mDelay(100);
+}
+
+/* PD CONTROL CHANGE START: Add a menu editor that updates and saves the scaled Td value. */
+void F_PD_TD(void)
+{
+    while(SW_D)
+    {
+        OLED_ClearBuffer();
+        OLED_Printf(0U, 0U, "TD=%04u", g_u16_pd_td);
+
+        if (SW_R == 0)
+        {
+            LL_mDelay(125);
+            if (g_u16_pd_td <= (PD_TD_MAX_VALUE - PD_TD_STEP)) {
+                g_u16_pd_td += PD_TD_STEP;
+            } else {
+                g_u16_pd_td = PD_TD_MAX_VALUE;
+            }
+        }
+        else if (SW_L == 0)
+        {
+            LL_mDelay(125);
+            if (g_u16_pd_td >= PD_TD_STEP) {
+                g_u16_pd_td -= PD_TD_STEP;
+            } else {
+                g_u16_pd_td = 0U;
+            }
+        }
+
+        g_pd_control.fp32td = (float)g_u16_pd_td * PD_TD_STORAGE_SCALE;
+    }
+
+    write_pd_td_rom();
+    a = 5;
+    b = 0;
+    c = 0;
+    LL_mDelay(100);
+}
+/* PD CONTROL CHANGE END */
+
+void F_TURNDIST()
+{
+    while(SW_D)
+    {
+        OLED_ClearBuffer();
+        OLED_Printf(0U, 0U, "DIST=%u", g_u16turn_dist);
+        if (!SW_R)
+        {
+            LL_mDelay(125);
+            g_u16turn_dist += 1;
+        }
+        else if (!SW_L)
+        {
+            LL_mDelay(125);
+            g_u16turn_dist -= 1;
+        }
+    }
+    write_turn_dist_rom();
+    a = 3;
+    b = 2;
+}
+
+void F_VELOCITY()
+{
+ 
+    a = 0;
+    while(SW_D)
+    {
+        OLED_ClearBuffer();
+        OLED_Printf(0U, 0U, "VEL=%lu", g_u32_VEL_targetval);
+        if (!SW_R)
+        {
+            LL_mDelay(125);
+            g_u32_VEL_targetval += 50;
+        }
+        else if (!SW_L)
+        {
+            LL_mDelay(125);
+            g_u32_VEL_targetval -= 50;
+        }
+    }
+    g_fp32_user_vel = (float)g_u32_VEL_targetval / 128.0f;
+    write_vel_rom();
+    a = 1;
+    b = 0;
+}
+
+void motor_vari_init( void )
+{
+    Init_MotorCtrlVar( &LMotor );
+    Init_MotorCtrlVar( &RMotor );
+}
+
+void Init_MotorCtrlVar( MOTORCTRL *pM )
+{
+    memset( pM, 0, sizeof(MOTORCTRL) );
+
+    pM->fp32target_accel = (float)g_u32_ACC_targetval;
+    pM->fp32target_accel_inv = 0.0f;
+    pM->fp32target_vel = (float)g_u32_VEL_targetval;
+    pM->fp32target_dist = 0.0f;
+    pM->fp32velocity = 0.0f;
+    pM->fp32next_vel = 0.0f;
+
+    pM->fp32accel_step = 0.0f;
+
+    pM->fp32handle = 1.0f;
+    pM->fp32total_dist = 0.0f;
+    pM->fp32time_value = 0.0f;
+    pM->u32_Period = 0;
+    pM->u16_pPeriod = 0;
+    pM->u32_Period_Cnt = 0;
+
+    pM->fp32cross_check_dist = 0.0f;
+}
+
+void Motor_CalBaseMotionValue( MOTORCTRL *pM )
+{
+    if(pM->fp32next_vel < pM->fp32target_vel)
+    {
+        pM->fp32velocity = pM->fp32next_vel;
+        pM->fp32accel_step = STEP_2D * pM->fp32target_accel;
+        pM->fp32next_vel = sqrtf(pM->fp32accel_step + pM->fp32velocity * pM->fp32velocity);
+
+        pM->fp32target_accel_inv = 1.0f / pM->fp32target_accel;
+
+        pM->fp32time_value = (pM->fp32next_vel - pM->fp32velocity) * pM->fp32target_accel_inv;
+
+        pM->u32_Period = (uint32_t)(40000.0f * pM->fp32time_value * pM->fp32handle);
+
+        pM->u32_Period_Cnt = 0;
+
+        if( pM->fp32target_vel <= pM->fp32next_vel )
+            pM->fp32next_vel = pM->fp32target_vel;
+    }
+    else
+    {
+        pM->fp32velocity = pM->fp32next_vel;
+        pM->fp32accel_step = STEP_2D * pM->fp32target_accel;
+        float val = pM->fp32velocity * pM->fp32velocity - pM->fp32accel_step;
+        pM->fp32next_vel = (val > 0.0f) ? sqrtf(val) : 0.0f;
+
+        pM->fp32target_accel_inv = 1.0f / pM->fp32target_accel;
+
+        pM->fp32time_value = (pM->fp32velocity - pM->fp32next_vel) * pM->fp32target_accel_inv;
+
+        pM->u32_Period = (uint32_t)(40000.0f * pM->fp32time_value * pM->fp32handle);
+
+        pM->u32_Period_Cnt = 0;
+
+        if( pM->fp32target_vel >= pM->fp32next_vel )
+            pM->fp32next_vel = pM->fp32target_vel;
+    }
+}
+
+void R_Motor_ON( MOTORCTRL*pM )
+{
+    pM->fp32turnmark_check_dist += STEP_D;
+    pM->fp32cross_check_dist += STEP_D;
+    pM->fp32gone_dist += STEP_D;
+    pM->fp32distance_sum += STEP_D;
+
+    RMotor.fp32err_distance = RMotor.fp32user_distance - RMotor.fp32distance_sum;
+    LMotor.fp32err_distance = LMotor.fp32user_distance - LMotor.fp32distance_sum;
+
+    decel_calculation();
+}
+
+void L_Motor_ON(MOTORCTRL*pM )
+{
+    pM->fp32turnmark_check_dist += STEP_D;
+    pM->fp32cross_check_dist += STEP_D;
+    pM->fp32gone_dist += STEP_D;
+    pM->fp32distance_sum += STEP_D;
+
+    LMotor.fp32err_distance = LMotor.fp32user_distance - LMotor.fp32distance_sum;
+    RMotor.fp32err_distance = RMotor.fp32user_distance - RMotor.fp32distance_sum;
+
+    decel_calculation();
+}
+
+void decel_calculation()
+{
+   if( LMotor.u16decel_flag )
+   {
+      if( LMotor.fp32decel_distance >= fabsf( LMotor.fp32err_distance ) )
+      {
+         RMotor.fp32target_vel = RMotor.fp32decel_vel;
+         LMotor.fp32target_vel = LMotor.fp32decel_vel;
+
+         RMotor.u16decel_flag = LMotor.u16decel_flag = OFF;
+
+         g_Flag.speed_up = OFF;
+         g_Flag.speed_up_start = OFF;
+      }
+   }
+   else if( RMotor.u16decel_flag )
+   {
+      if( RMotor.fp32decel_distance >= fabsf( RMotor.fp32err_distance ) )
+      {
+         RMotor.fp32target_vel = RMotor.fp32decel_vel;
+         LMotor.fp32target_vel = LMotor.fp32decel_vel;
+
+         RMotor.u16decel_flag = LMotor.u16decel_flag = OFF;
+
+         g_Flag.speed_up = OFF;
+         g_Flag.speed_up_start = OFF;
+      }
+   }
+}
+
+void move_to_move( float dist, float dec_dist, float tar_vel, float dec_vel, int32_t acc )
+{
+   // In original code CpuTimer0 was stopped/started here
+   __disable_irq();
+
+   RMotor.fp32target_accel = LMotor.fp32target_accel = (float)acc;
+
+   RMotor.fp32decel_distance = LMotor.fp32decel_distance = dec_dist;
+   RMotor.fp32user_distance = LMotor.fp32user_distance = dist;
+
+   RMotor.fp32target_vel= LMotor.fp32target_vel = tar_vel;
+
+   RMotor.fp32err_distance = RMotor.fp32user_distance - RMotor.fp32distance_sum;
+   LMotor.fp32err_distance = LMotor.fp32user_distance - LMotor.fp32distance_sum;
+
+   RMotor.fp32decel_vel = LMotor.fp32decel_vel = dec_vel;
+
+   RMotor.u16decel_flag = LMotor.u16decel_flag = ON;
+
+   __enable_irq();
+}
+
+void move_to_end( float dist, float vel, int32_t acc )
+{
+   __disable_irq();
+
+   g_fp32time = (float)g_i32_Time_index * 0.000025f;
+
+   RMotor.fp32target_accel = LMotor.fp32target_accel = (float)acc;
+
+   LMotor.fp32decel_distance = RMotor.fp32decel_distance = dist;
+   RMotor.fp32user_distance =  LMotor.fp32user_distance = dist;
+
+   RMotor.fp32target_vel = LMotor.fp32target_vel = vel;
+
+   RMotor.fp32err_distance = RMotor.fp32user_distance - RMotor.fp32distance_sum;
+   LMotor.fp32err_distance = LMotor.fp32user_distance - LMotor.fp32distance_sum;
+
+   RMotor.fp32decel_vel = LMotor.fp32decel_vel = 0.0f;
+
+   RMotor.u16decel_flag = LMotor.u16decel_flag = ON;
+   g_Flag.move_state = OFF;
+
+   __enable_irq();
+}
+
+/*
+ * SLA702x has no separate ENABLE/STOP input.  Holding is therefore achieved
+ * by stopping new step patterns while leaving the last valid phase pattern on
+ * INA, /INA, INB and /INB unchanged.
+ */
+void Motor_StartHold(uint32_t hold_ms)
+{
+   __disable_irq();
+   g_Flag.motor = OFF;       /* stop generating new step patterns */
+   g_motor_hold = ON;        /* sensor ISR must preserve the last pattern */
+   __enable_irq();
+
+   LL_mDelay(hold_ms);       /* interrupts and sensor scanning continue */
+
+   Motor_ReleaseHold();
+}
+
+void Motor_ReleaseHold(void)
+{
+   __disable_irq();
+   g_motor_hold = OFF;
+   motor_stop_all();         /* all excitation inputs Low: coil current off */
+   __enable_irq();
+}

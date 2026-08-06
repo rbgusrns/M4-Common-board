@@ -50,6 +50,9 @@ typedef enum
 void SpiWriteRom(uint16_t page, uint8_t addr, uint16_t len, uint16_t *buf);
 void SpiReadRom(uint16_t page, uint8_t addr, uint16_t len, uint16_t *buf);
 
+/* Load every persisted setting once during application startup. */
+void Rom_ReadAll(void);
+
 /* ──────────── Parameter read/write functions ──────────── */
 void maxmin_read_rom(void);
 void maxmin_write_rom(void);

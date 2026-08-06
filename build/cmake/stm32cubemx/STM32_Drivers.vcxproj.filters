@@ -4,76 +4,37 @@
     <ClCompile Include="C:\STproject\M4_STEP\Core\Src\system_stm32g4xx.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_adc.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_utils.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_adc_ex.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_exti.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_gpio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_adc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_dma.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_rcc.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_rcc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_rcc_ex.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_pwr.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_flash.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_i2c.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_flash_ex.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_spi.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_flash_ramfunc.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_tim.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_gpio.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_exti.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_dma.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_dma_ex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_pwr.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_pwr_ex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_cortex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_i2c.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_i2c_ex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_spi.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_spi_ex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_tim.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_tim_ex.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_uart.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_hal_uart_ex.c">
+    <ClCompile Include="C:\STproject\M4_STEP\Drivers\STM32G4xx_HAL_Driver\Src\stm32g4xx_ll_usart.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

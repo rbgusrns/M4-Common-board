@@ -22,7 +22,6 @@ void second_race()
 void fast_race(race_info *pinfo)
 {
     LL_mDelay(100);
-    read_line_info_rom();
 
     turn_info_func();
     turn_division_func();
